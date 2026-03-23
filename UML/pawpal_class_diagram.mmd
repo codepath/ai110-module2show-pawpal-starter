@@ -1,0 +1,32 @@
+%% PawPal class diagram (Mermaid)
+classDiagram
+    class Pet {
+        +name: str
+    }
+
+    class Owner {
+        +name: str
+        +pets: list<Pet>
+        +preferences: dict
+        +add_pet(pet: Pet)
+    }
+
+    class Task {
+        +name: str
+        +priority: str
+        +start_time: time
+        +end_time: time
+        +date: date
+        +assigned_pets: list<Pet>
+        +__init__(name, priority, date, start_time=None, end_time=None)
+        +get_duration(): time
+    }
+
+    class Schedule {
+        +tasks: list<Task>
+        +date: date
+    }
+
+    Owner "1" o-- "*" Pet : owns
+    Schedule "1" o-- "*" Task : contains
+    Task "*" o-- "*" Pet : assigned

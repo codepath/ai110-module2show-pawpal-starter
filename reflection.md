@@ -2,10 +2,57 @@
 
 ## 1. System Design
 
+### Actions to program
+
+Three core actions:
+- Add a pet
+- Schedule a walk (task with date, time duration, and priority)
+- See today's tasks
+
+Extended
+- Schedule medication (task with date, priority and without time duration)
+- Explain what constraints informed today's tasks
+- Edit tasks
+
+### Object building blocks
+
+#### Pet
+Attributes
+- name: str
+
+#### Owner
+Attributes
+- name: str
+- pets: list<Pet>
+- preferences: dict (e.g. preference: value)
+
+Methods
+- add_pet(Pet) -> adds pet to pets
+
+#### Task
+Attributes
+- name: str
+- priority: str category
+- start_time (optional): time 
+- end_time (optional): time
+- date: date
+- assigned_pets: list<Pet>
+
+Methods
+- init(name, priority, date, start_time = None, end_time = None)
+- get_duration() -> difference between start and end times
+
+#### Schedule
+Attributes
+- tasks: list<Task>
+- date: date (now)
+
 **a. Initial design**
 
 - Briefly describe your initial UML design.
 - What classes did you include, and what responsibilities did you assign to each?
+
+Initial design included a pet and owner class, as well as a task and schedule class. The pet will be associated with a set of tasks. An owner will have a
 
 **b. Design changes**
 
