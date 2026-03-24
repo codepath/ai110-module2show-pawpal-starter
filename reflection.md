@@ -42,7 +42,7 @@ Methods
 - init(name, priority, date, start_time = None, end_time = None)
 - get_duration() -> difference between start and end times
 
-#### Schedule
+#### Scheduler
 Attributes
 - tasks: list<Task>
 - date: date (now)
@@ -52,12 +52,73 @@ Attributes
 - Briefly describe your initial UML design.
 - What classes did you include, and what responsibilities did you assign to each?
 
-Initial design included a pet and owner class, as well as a task and schedule class. The pet will be associated with a set of tasks. An owner will have a
+UML diagram under ./UML, contains initial classes with their relationships, methods, and attributes.
+
+Initial design included classes:
+- pet: holds pet information and is assigned to task and owner
+- owner: holds owner preferences and is associated with a set of pets
+- task: holds task information and which pets they're related to. can be edited and can be aggregated in a schedule
+- scheduler: holds a set of tasks for a given day to be displayed in the frontend
 
 **b. Design changes**
 
 - Did your design change during implementation?
 - If yes, describe at least one change and why you made it.
+
+Based on the README suggestions, I realized that it was asking for a Scheduler class so I changed that.
+
+I also changed some relationships based on the README information. A pet has a list of tasks instead of a pet being assigned to a task. The owner provides access to their pets' tasks. The Scheduler is more broad and does CRUD on tasks across pets.
+
+Regenerated the mermaid diagram and regenerated the structure for the pawpal_system.py file.
+
+For each class, specific changes:
+
+**Task**
+
+Attributes
+-name
++description: str
+-end_time
+-start_time
++scheduled_time: time
++frequency: str (once, weekly, daily, etc)
++completed: bool
++Optional(duration): timedelta
+
+Methods
++mark_complete()
++reschedule(new_time)
+
+**Pet**
+Has tasks
+
+Attributes
++species: str
++age: int
++tasks: list<Task>
+
+Methods
++add_task(task) -> None
++remove_task(task) -> None
++get_tasks() -> list
+
+**Owner**
+Has pets
+
+Methods
++get_all_tasks() -> list of tasks from owner's pets
+
+**Scheduler**
+Manages owners
+
+Attributes
++owners: list<Owner>
+
+Methods
++retrieve_tasks(date) -> list of all tasks for date across owners/pets
++organize_tasks(Optional(date)) -> sorted list of tasks chronologically across date or today's date
++detect_conflicts() -> list of all conflicts for tasks across all owners/pets
++assign_task_to_pet(task, pet) -> None
 
 ---
 

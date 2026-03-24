@@ -1,32 +1,48 @@
-%% PawPal class diagram (Mermaid)
+%% PawPal class diagram (updated)
 classDiagram
-    class Pet {
-        +name: str
+
+    %% Task represents a single activity
+    class Task {
+        +description: str
+        +scheduled_time: time
+        +frequency: str
+        +completed: bool
+        +mark_complete()
+        +reschedule(new_time)
     }
 
+    %% Pet stores details and its own tasks
+    class Pet {
+        +name: str
+        +species: str
+        +age: int
+        +tasks: list<Task>
+        +add_task(task: Task)
+        +remove_task(task: Task)
+        +get_tasks(): list<Task>
+    }
+
+    %% Owner manages multiple pets and exposes their tasks
     class Owner {
         +name: str
         +pets: list<Pet>
         +preferences: dict
         +add_pet(pet: Pet)
+        +get_all_tasks(): list<Task>
     }
 
-    class Task {
-        +name: str
-        +priority: str
-        +start_time: time
-        +end_time: time
-        +date: date
-        +assigned_pets: list<Pet>
-        +__init__(name, priority, date, start_time=None, end_time=None)
-        +get_duration(): time
+    %% Scheduler is the brain that organizes tasks across pets/owners
+    class Scheduler {
+        +owners: list<Owner>
+        +retrieve_tasks(date): list<Task>
+        +organize_tasks()
+        +detect_conflicts(): list
+        +assign_task_to_pet(task: Task, pet: Pet)
     }
 
-    class Schedule {
-        +tasks: list<Task>
-        +date: date
-    }
-
+    %% Relationships
     Owner "1" o-- "*" Pet : owns
-    Schedule "1" o-- "*" Task : contains
-    Task "*" o-- "*" Pet : assigned
+    Pet "1" o-- "*" Task : has
+    Scheduler "1" o-- "*" Owner : manages
+    Scheduler ..> Task : organizes
+
