@@ -1,0 +1,106 @@
+classDiagram
+    class Task {
+        +str task_id
+        +str title
+        +int duration_minutes
+        +str priority
+        +str category
+        +str frequency
+        +str preferred_time
+        +str time
+        +date due_date
+        +bool is_required
+        +int start_minute
+        +str notes
+        +str description
+        +bool is_completed
+        +int last_completed_day
+        +date last_completed_on
+        +is_high_priority() bool
+        +is_required_task() bool
+        +fits_time_limit(minutes) bool
+        +get_priority_score() int
+        +mark_complete(day_index, completed_on) None
+        +is_due_on_day(day_index) bool
+        +update_task(**kwargs) None
+        +describe() str
+    }
+
+    class Pet {
+        +str name
+        +str species
+        +str breed
+        +int age
+        +str energy_level
+        +str medical_needs
+        +List~Task~ care_tasks
+        +add_task(task) None
+        +remove_task(task_id) None
+        +get_task_by_id(task_id) Task
+        +get_tasks() List~Task~
+        +get_required_tasks() List~Task~
+        +get_pet_summary() str
+    }
+
+    class Owner {
+        +str name
+        +int available_minutes_per_day
+        +str preferred_schedule
+        +List~str~ task_preferences
+        +int max_tasks_per_day
+        +str notes
+        +List~Pet~ pets
+        +update_available_time(minutes) None
+        +set_preferences(preferences) None
+        +add_preference(task_type) None
+        +remove_preference(task_type) None
+        +add_pet(pet) None
+        +remove_pet(pet_name) None
+        +get_pet(pet_name) Pet
+        +get_pets() List~Pet~
+        +get_all_tasks() List~Task~
+        +can_do_task(task) bool
+        +get_summary() str
+    }
+
+    class Scheduler {
+        +Owner owner
+        +Pet pet
+        +List~Task~ tasks
+        +int time_budget
+        +List~Task~ scheduled_tasks
+        +List~Task~ unscheduled_tasks
+        +Dict~str,str~ selection_reasons
+        +Dict~str,str~ task_pet_lookup
+        +date schedule_date
+        +Dict~str,int~ TIME_SLOT_ORDER
+        +refresh_inputs() None
+        +generate_schedule(day_index) List~Task~
+        +prepare_recurring_tasks(day_index) None
+        +mark_task_complete(task_id, completed_on) Task
+        +rank_tasks() List~Task~
+        +filter_tasks() List~Task~
+        +sort_tasks() List~Task~
+        +sort_tasks_by_time(tasks) List~Task~
+        +sort_by_time(tasks) List~Task~
+        +filter_tasks_by_pet_status(pet_name, status) List~Task~
+        +filter_by(pet_name, status) List~Task~
+        +fit_tasks_into_day() None
+        +detect_conflicts(tasks) List~Tuple~Task,Task~~
+        +get_conflict_warnings(tasks) List~str~
+        +explain_schedule() str
+        -_get_task_rank(task) int
+        -_matches_preferences(task) bool
+        -_build_selection_reason(task) str
+        -_find_conflicting_task(task) Task
+        -_tasks_conflict(task_a, task_b) bool
+        -_get_task_start_minute(task) int
+        -_format_task_start(task) str
+        -_create_next_recurring_task(task, pet, next_due_date) Task
+    }
+
+    Owner "1" o-- "0..*" Pet : owns
+    Pet "1" o-- "0..*" Task : has
+    Scheduler --> Owner : uses
+    Scheduler --> Pet : reads
+    Scheduler --> Task : ranks/schedules
