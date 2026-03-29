@@ -3,11 +3,17 @@ from datetime import date
 
 
 class TaskDict(TypedDict):
-    """Type definition for Task dictionary representation."""
+    """Type definition for Task dictionary representation.
+    Converts object attributes to a dictionary format for serialization and storage. (for saving to JSON/file)
+    due_time is stored as an ISO string (e.g. '2025-04-01') so it survives JSON round-trips.
+    start_time is stored in minutes from midnight (e.g. 9*60 = 540 for 9:00 AM).
+    """
     name: str
     duration: int
     priority: int
-    due_time: Optional[str]
+    due_time: Optional[str]       # ISO date string — must be parsed back to date on load
+    start_time: Optional[int]     # minutes from midnight; set by Scheduler.generate_schedule
+    pet_name: Optional[str]       # which pet this task belongs to; preserves context after flat scheduling
     recurring: bool
     notes: List[str]
 
@@ -29,7 +35,7 @@ class OwnerDict(TypedDict):
 
 class Task:
     """Represents a pet care task with scheduling information.
-    
+    Converts dictionary data to an object-oriented format for easier manipulation and access. (for loading from JSON/file)
     Attributes:
         name: Name of the task (e.g., 'Feed dog', 'Walk cat')
         duration: How long the task takes in minutes
@@ -42,6 +48,8 @@ class Task:
     duration: int
     priority: int
     due_time: Optional[date]
+    start_time: Optional[int]     # minutes from midnight; assigned by Scheduler
+    pet_name: Optional[str]       # set when task is added to a Pet; used by Scheduler output
     recurring: bool
     notes: List[str]
 
@@ -51,7 +59,9 @@ class Task:
         duration: int,
         priority: int,
         due_time: Optional[date] = ...,
-        recurring: bool = ...
+        recurring: bool = ...,
+        start_time: Optional[int] = ...,
+        pet_name: Optional[str] = ...
     ) -> None: ...
 
     def is_due_today(self) -> bool:
@@ -131,10 +141,42 @@ class Pet:
         ...
 
     def add_task(self, task: Task) -> None:
-        """Add a task for this pet.
-        
+        """Add a task for this pet. Also sets task.pet_name to this pet's name
+        so the task carries its owner context when passed to Scheduler.
+
         Args:
             task: Task instance to add.
+        """
+        ...
+
+    def remove_task(self, task_name: str) -> None:
+        """Remove a task by name.
+
+        Args:
+            task_name: Name of the task to remove.
+
+        Raises:
+            ValueError: If no task with that name exists.
+        """
+        ...
+
+    def update_task(self, task_name: str, updated_task: Task) -> None:
+        """Replace an existing task with an updated version.
+
+        Args:
+            task_name: Name of the task to replace.
+            updated_task: New Task instance to substitute in.
+
+        Raises:
+            ValueError: If no task with that name exists.
+        """
+        ...
+
+    def get_today_tasks(self) -> List[Task]:
+        """Return only tasks that are due today.
+
+        Returns:
+            List of Task instances where is_due_today() is True.
         """
         ...
 
@@ -209,17 +251,34 @@ class Owner:
 
     def add_pet(self, pet: Pet) -> None:
         """Add a pet to this owner's collection.
-        
+
         Args:
             pet: Pet instance to add.
         """
         ...
 
+    def get_pets(self) -> List[Pet]:
+        """Retrieve all pets owned by this owner.
+
+        Returns:
+            List of Pet instances.
+        """
+        ...
+
     def get_all_tasks(self) -> List[Task]:
         """Retrieve all tasks across all pets owned by this owner.
-        
+
         Returns:
-            List of all Task instances from all pets.
+            Flat list of all Task instances from all pets.
+        """
+        ...
+
+    def get_today_tasks(self) -> List[Task]:
+        """Retrieve all tasks due today across all pets.
+
+        Returns:
+            Flat list of Task instances where is_due_today() is True, across all pets.
+            Each task's pet_name field identifies which pet it belongs to.
         """
         ...
 
@@ -264,6 +323,15 @@ class Owner:
         ...
 
 
+class ScheduleResult(TypedDict):
+    """Return type for Scheduler.generate_schedule.
+    Separates tasks that fit in available time from those that were dropped,
+    so callers can show the user what got left out instead of raising an exception.
+    """
+    scheduled: List[TaskDict]   # tasks that fit, each with start_time assigned (minutes from midnight)
+    dropped: List[TaskDict]     # tasks that could not fit in available_times
+
+
 class Scheduler:
     """Manages pet task scheduling and conflict detection.
     
@@ -280,17 +348,21 @@ class Scheduler:
         """
         ...
 
-    def generate_schedule(self, tasks: List[Task]) -> List[Task]:
+    def generate_schedule(self, tasks: List[Task]) -> ScheduleResult:
         """Generate an optimal schedule for the given tasks.
-        
+
+        Assigns a start_time (minutes from midnight) to each task that fits within
+        available_times. Tasks that do not fit are returned in 'dropped' rather than
+        raising — the caller can inform the user which tasks were left out.
+
+        Tasks preserve their pet_name so the output stays linked to each pet.
+
         Args:
-            tasks: List of tasks to schedule.
-            
+            tasks: List of tasks to schedule (typically from Owner.get_today_tasks()).
+
         Returns:
-            List of tasks organized in priority and time order.
-            
-        Raises:
-            ValueError: If tasks cannot fit in available time.
+            ScheduleResult with 'scheduled' (tasks with start_time assigned) and
+            'dropped' (tasks that could not fit in available time).
         """
         ...
 
@@ -306,13 +378,17 @@ class Scheduler:
         ...
 
     def detect_conflicts(self, tasks: List[Task]) -> bool:
-        """Detect if scheduled tasks have time conflicts.
-        
+        """Detect if scheduled tasks have overlapping time windows.
+
+        Requires tasks to already have start_time set (i.e. call generate_schedule first).
+        A conflict exists when task A's start_time + duration overlaps task B's start_time.
+        Tasks with start_time=None are skipped.
+
         Args:
-            tasks: List of tasks to check for conflicts.
-            
+            tasks: List of tasks to check; each should have start_time and duration set.
+
         Returns:
-            True if conflicts are detected, False otherwise.
+            True if any two tasks overlap, False otherwise.
         """
         ...
 

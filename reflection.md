@@ -1,11 +1,32 @@
 # PawPal+ Project Reflection
 
 ## 1. System Design
+3 core actions users should be able to perform are:
+    1. add pets
+    2. add tasks
+    3. edit tasks
+    4. See all tasks for today
 
 **a. Initial design**
 
 - Briefly describe your initial UML design.
+    I included owner repository, task, pet, and scheduler. Scheduler is where main will live. Owner uses pet, pet uses task.
+     
 - What classes did you include, and what responsibilities did you assign to each?
+    Owner: It has a repository and a class that describes itself. It is the top-level object (aggregate root), so saving it saves all system data including pets, tasks, and notes. It manages pets and acts as the single source of truth for the system.
+
+    Pet:
+    It represents an individual animal and acts as a container for tasks. A pet owns its tasks, meaning all care activities are scoped to a specific pet. It also stores notes and basic identifying information like name and species.
+
+    Task:
+    It represents a single care activity (e.g., feeding, walk, medication). It stores scheduling-related data like duration, priority, due time, and recurrence. It also holds notes and provides structure for what needs to be done for a pet.
+
+    Scheduler:
+    It is responsible for generating a daily plan from a list of tasks. It applies algorithmic logic such as sorting by priority, fitting tasks within available time, and detecting conflicts. It does not store data — it only processes it.
+
+    OwnerRepository:
+    It handles persistence of the system by saving and loading the Owner object to and from JSON. Since Owner is the aggregate root, this repository manages the entire application state in a single place.
+![alt text](image.png)
 
 **b. Design changes**
 
@@ -24,6 +45,7 @@
 **b. Tradeoffs**
 
 - Describe one tradeoff your scheduler makes.
+    I decided to use local storage on your computer rather than trying to overcomplicate with a database.
 - Why is that tradeoff reasonable for this scenario?
 
 ---
