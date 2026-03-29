@@ -10,7 +10,7 @@
 **a. Initial design**
 
 - Briefly describe your initial UML design.
-    I included owner repository, task, pet, and scheduler. Scheduler is where main will live. Owner uses pet, pet uses task.
+    I included owner repository, task, pet, and scheduler. Owner uses pet, pet uses task.
      
 - What classes did you include, and what responsibilities did you assign to each?
     Owner: It has a repository and a class that describes itself. It is the top-level object (aggregate root), so saving it saves all system data including pets, tasks, and notes. It manages pets and acts as the single source of truth for the system.
@@ -31,6 +31,7 @@
 **b. Design changes**
 
 - Did your design change during implementation?
+    I asked Claude to review pawpal_system.py and it mentioned that relationships between owner & scheudler is missing, also there isn't a method that filters but what's due today. Also there isn't a way to edit or remove tasks.
 - If yes, describe at least one change and why you made it.
 
 ---
