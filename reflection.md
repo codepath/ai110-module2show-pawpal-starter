@@ -89,8 +89,13 @@ classDiagram
 
 **b. Design changes**
 
-- Did your design change during implementation?
-- If yes, describe at least one change and why you made it.
+After reviewing the skeleton in `pawpal_system.py`, three bottlenecks were identified:
+
+1. **`Pet.get_care_needs()` returns strings, not `Task` objects.** The method produces a list of title strings, but the `Scheduler` expects `Task` objects. There is no bridge between them, so the species defaults can't be used directly. *Fix needed:* either change `get_care_needs()` to return `Task` objects with sensible defaults, or add a factory helper.
+
+2. **`build_schedule()` silently drops tasks that don't fit.** When a task exceeds the available time window the loop `break`s, but the skipped tasks are never reported. A user has no way to know their low-priority tasks were dropped. *Fix needed:* collect skipped tasks and return or surface them separately.
+
+3. **`Task` has no `preferred_time` attribute.** Some tasks (e.g. "Morning walk", "Evening feeding") are inherently time-bound. Without a preferred time slot, the scheduler cannot respect natural care rhythms. *Deferred for now* — the current priority-based ordering is a reasonable first approximation.
 
 ---
 
@@ -98,13 +103,19 @@ classDiagram
 
 **a. Constraints and priorities**
 
-- What constraints does your scheduler consider (for example: time, priority, preferences)?
-- How did you decide which constraints mattered most?
+The scheduler considers three constraints, in this priority order:
+
+1. **Task priority** (high → medium → low) — the most important constraint. A missed high-priority task (e.g., medication, feeding) has real consequences for the pet's wellbeing, so it must be scheduled first regardless of duration.
+2. **Owner availability window** (`available_start` / `available_end`) — tasks cannot be placed outside this window. Tasks that don't fit are moved to `skipped` and reported to the user.
+3. **Task duration** — within the same priority tier, shorter tasks are scheduled first to maximise the number of tasks that fit before the window closes.
 
 **b. Tradeoffs**
 
-- Describe one tradeoff your scheduler makes.
-- Why is that tradeoff reasonable for this scenario?
+**Conflict detection checks for exact time overlaps, not duration-aware overlaps.**
+
+The `detect_conflicts()` method uses a pairwise O(n²) interval comparison: two items conflict if `A.start < B.end AND B.start < A.end`. This correctly catches all overlapping slots.
+
+The tradeoff is that the current `build_schedule()` assigns tasks sequentially — it never actually creates an overlap. Conflicts can only arise if tasks are injected manually (e.g., via the Streamlit UI in a future iteration where users pick specific start times). Keeping conflict detection as a separate post-build check, rather than baking it into the scheduling loop, keeps the two concerns independent and easier to test. The O(n²) cost is acceptable for a typical day of pet care tasks (< 20 items); a sweep-line algorithm would be needed at scale.
 
 ---
 

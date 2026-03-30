@@ -3,7 +3,10 @@ PawPal+ — backend logic layer
 Classes: Task, Pet, Owner, ScheduledItem, Scheduler
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
+from datetime import date, timedelta
 from typing import List, Optional
 
 
@@ -15,9 +18,10 @@ from typing import List, Optional
 class Task:
     title: str
     duration_minutes: int
-    priority: str                    # "low" | "medium" | "high"
-    frequency: str = "daily"         # "daily" | "weekly" | "as-needed"
+    priority: str                       # "low" | "medium" | "high"
+    frequency: str = "daily"            # "daily" | "weekly" | "as-needed"
     completed: bool = False
+    due_date: Optional[date] = None     # date this task is next due
 
     _PRIORITY_ORDER = {"high": 0, "medium": 1, "low": 2}
 
@@ -30,17 +34,42 @@ class Task:
         self.completed = False
 
     def is_high_priority(self) -> bool:
+        """Return True if priority is 'high'."""
         return self.priority == "high"
 
     def priority_value(self) -> int:
-        """Numeric sort key — lower number = scheduled sooner."""
+        """Return a numeric sort key — lower = scheduled sooner."""
         return self._PRIORITY_ORDER.get(self.priority, 99)
+
+    def next_occurrence(self) -> "Task":
+        """
+        Return a fresh, incomplete copy of this task due on its next occurrence.
+
+        Uses timedelta so the next due date is always accurate:
+          daily   → today + 1 day
+          weekly  → today + 7 days
+          as-needed → no automatic recurrence; returns None
+        """
+        delta_map = {"daily": timedelta(days=1), "weekly": timedelta(weeks=1)}
+        delta = delta_map.get(self.frequency)
+        if delta is None:
+            return None   # as-needed tasks don't recur automatically
+        base = self.due_date if self.due_date else date.today()
+        return Task(
+            title=self.title,
+            duration_minutes=self.duration_minutes,
+            priority=self.priority,
+            frequency=self.frequency,
+            completed=False,
+            due_date=base + delta,
+        )
 
     def __repr__(self) -> str:
         status = "✓" if self.completed else "○"
+        due    = f", due {self.due_date}" if self.due_date else ""
         return (
             f"[{status}] {self.title} ({self.duration_minutes} min, "
-            f"{self.priority}, {self.frequency})"
+            f"{self.priority}, {self.frequency}{due})"
         )
 
 
@@ -80,9 +109,9 @@ class Pet:
                 task.reset()
 
     def load_default_tasks(self) -> None:
-        """Populate species-appropriate default tasks if none exist."""
+        """Populate species-appropriate default Task objects if the list is empty."""
         if self.tasks:
-            return  # don't overwrite tasks the user already added
+            return
         defaults = {
             "dog": [
                 Task("Morning walk",     30, "high",   "daily"),
@@ -114,8 +143,6 @@ class Owner:
     available_end: str   = "20:00"
     pets: List[Pet] = field(default_factory=list)
 
-    # --- pet management ---
-
     def add_pet(self, pet: Pet) -> None:
         """Register a pet under this owner."""
         self.pets.append(pet)
@@ -133,26 +160,21 @@ class Owner:
                 return pet
         return None
 
-    # --- task access across all pets ---
-
     def get_all_tasks(self) -> List[tuple]:
-        """
-        Return every task across all pets as (pet, task) tuples.
-        This is the main entry point the Scheduler uses to collect work.
-        """
+        """Return every (pet, task) pair across all pets."""
         return [(pet, task) for pet in self.pets for task in pet.tasks]
 
     def get_all_pending_tasks(self) -> List[tuple]:
         """Return only incomplete (pet, task) pairs across all pets."""
         return [(pet, task) for pet in self.pets for task in pet.get_pending_tasks()]
 
-    # --- availability ---
-
     def set_availability(self, start: str, end: str) -> None:
+        """Update the owner's available time window."""
         self.available_start = start
         self.available_end = end
 
     def get_preferences(self) -> dict:
+        """Return owner time preferences as a dict."""
         return {
             "available_start": self.available_start,
             "available_end": self.available_end,
@@ -179,7 +201,8 @@ class ScheduledItem:
     reason: str = ""
 
     def display(self) -> str:
-        flag = " ★" if self.task.is_high_priority() else ""
+        """Return a human-readable one-line representation of this slot."""
+        flag      = " ★" if self.task.is_high_priority() else ""
         pet_label = f"[{self.pet.name}] "
         line = (
             f"{self.start_time}–{self.end_time}  "
@@ -199,22 +222,22 @@ class Scheduler:
     def __init__(self, owner: Owner):
         self.owner: Owner = owner
         self.schedule: List[ScheduledItem] = []
-        self.skipped: List[tuple] = []      # (pet, task) pairs that didn't fit
+        self.skipped: List[tuple] = []    # (pet, task) pairs that didn't fit
+
+    # ------------------------------------------------------------------
+    # Core scheduling
+    # ------------------------------------------------------------------
 
     def build_schedule(self) -> List[ScheduledItem]:
         """
-        Ask the Owner for all pending (pet, task) pairs, sort by priority
-        then duration, and fit them sequentially into the owner's time window.
-
-        Tasks that don't fit are stored in self.skipped instead of being
-        silently dropped.
+        Collect all pending tasks from the owner's pets, sort by priority then
+        duration, and fit them sequentially into the owner's time window.
+        Tasks that don't fit are stored in self.skipped (not silently dropped).
         """
         self.schedule = []
-        self.skipped = []
+        self.skipped  = []
 
         pending = self.owner.get_all_pending_tasks()
-
-        # Sort: high priority first, then shorter tasks first within same priority
         sorted_pairs = sorted(
             pending, key=lambda pair: (pair[1].priority_value(), pair[1].duration_minutes)
         )
@@ -223,8 +246,8 @@ class Scheduler:
         for pet, task in sorted_pairs:
             end_time = self._add_minutes(current_time, task.duration_minutes)
             if end_time > self.owner.available_end:
-                self.skipped.append((pet, task))   # report instead of silently drop
-                continue                            # try remaining (shorter) tasks
+                self.skipped.append((pet, task))
+                continue
             self.schedule.append(
                 ScheduledItem(
                     pet=pet,
@@ -238,20 +261,113 @@ class Scheduler:
 
         return self.schedule
 
+    # ------------------------------------------------------------------
+    # Sorting
+    # ------------------------------------------------------------------
+
+    def sort_by_time(self) -> List[ScheduledItem]:
+        """
+        Return the schedule sorted by start_time ascending.
+
+        "HH:MM" zero-padded strings compare correctly with Python's default
+        string ordering (lexicographic), so a simple lambda is sufficient:
+          key=lambda item: item.start_time
+        """
+        return sorted(self.schedule, key=lambda item: item.start_time)
+
+    # ------------------------------------------------------------------
+    # Filtering
+    # ------------------------------------------------------------------
+
+    def filter_tasks(
+        self,
+        pet_name: Optional[str] = None,
+        completed: Optional[bool] = None,
+    ) -> List[ScheduledItem]:
+        """
+        Return a filtered view of the current schedule.
+
+        Parameters
+        ----------
+        pet_name  : if given, keep only items belonging to that pet (case-insensitive).
+        completed : if True, keep only completed items; if False, only pending.
+                    If None, completion status is not filtered.
+        """
+        results = self.schedule
+        if pet_name is not None:
+            results = [i for i in results if i.pet.name.lower() == pet_name.lower()]
+        if completed is not None:
+            results = [i for i in results if i.task.completed == completed]
+        return results
+
+    # ------------------------------------------------------------------
+    # Mark complete + recurring task automation
+    # ------------------------------------------------------------------
+
     def mark_complete(self, task_title: str) -> bool:
-        """Mark a scheduled task as completed by title. Returns True if found."""
+        """
+        Mark a scheduled task as completed by title.
+
+        For recurring tasks (daily / weekly), automatically creates the next
+        occurrence and appends it to the pet's task list so it appears in
+        tomorrow's schedule. Returns True if the task was found.
+        """
         for item in self.schedule:
             if item.task.title == task_title:
                 item.task.complete()
+                # Auto-schedule next occurrence for recurring tasks
+                next_task = item.task.next_occurrence()
+                if next_task is not None:
+                    item.pet.add_task(next_task)
                 return True
         return False
+
+    # ------------------------------------------------------------------
+    # Conflict detection
+    # ------------------------------------------------------------------
+
+    def detect_conflicts(self) -> List[str]:
+        """
+        Check for overlapping time slots across all scheduled items.
+
+        Strategy: convert each slot to integer minutes, then compare every
+        pair with an overlap test:  A.start < B.end  and  B.start < A.end.
+        Returns a list of human-readable warning strings (empty = no conflicts).
+
+        Tradeoff: this is O(n²) — acceptable for a single day of pet tasks
+        (typically < 20 items), but would need a sweep-line algorithm at scale.
+        """
+        warnings = []
+        items = self.schedule
+
+        def to_minutes(t: str) -> int:
+            h, m = map(int, t.split(":"))
+            return h * 60 + m
+
+        for i in range(len(items)):
+            for j in range(i + 1, len(items)):
+                a, b = items[i], items[j]
+                a_start, a_end = to_minutes(a.start_time), to_minutes(a.end_time)
+                b_start, b_end = to_minutes(b.start_time), to_minutes(b.end_time)
+                if a_start < b_end and b_start < a_end:
+                    warnings.append(
+                        f"⚠ CONFLICT: [{a.pet.name}] {a.task.title} "
+                        f"({a.start_time}–{a.end_time}) overlaps with "
+                        f"[{b.pet.name}] {b.task.title} "
+                        f"({b.start_time}–{b.end_time})"
+                    )
+        return warnings
+
+    # ------------------------------------------------------------------
+    # Reporting
+    # ------------------------------------------------------------------
 
     def get_todays_tasks(self) -> List[ScheduledItem]:
         """Return scheduled items that are not yet completed."""
         return [item for item in self.schedule if not item.task.completed]
 
     def explain_plan(self) -> str:
-        """Return a human-readable explanation of the full schedule."""
+        """Return a full human-readable explanation of the schedule."""
         if not self.schedule:
             return "No schedule yet — call build_schedule() first."
 
@@ -277,12 +393,14 @@ class Scheduler:
 
     @staticmethod
     def _add_minutes(time_str: str, minutes: int) -> str:
+        """Add minutes to a 'HH:MM' string and return a new 'HH:MM' string."""
         h, m = map(int, time_str.split(":"))
         total = h * 60 + m + minutes
         return f"{total // 60:02d}:{total % 60:02d}"
 
     @staticmethod
     def _build_reason(task: Task) -> str:
+        """Generate a short explanation of why this task was scheduled when it was."""
         reasons = {
             "high":   "High-priority — scheduled first.",
             "medium": "Medium-priority — scheduled after urgent tasks.",

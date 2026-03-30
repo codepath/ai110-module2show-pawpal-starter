@@ -22,6 +22,17 @@ Your final app should:
 - Display the plan clearly (and ideally explain the reasoning)
 - Include tests for the most important scheduling behaviors
 
+## Smarter Scheduling
+
+Beyond basic priority sorting, PawPal+ includes four algorithmic features:
+
+| Feature | Method | How it works |
+|---|---|---|
+| **Sort by time** | `Scheduler.sort_by_time()` | Sorts scheduled items by `start_time` using a lambda key on zero-padded `"HH:MM"` strings, which compare correctly with Python's default string ordering. |
+| **Filter tasks** | `Scheduler.filter_tasks(pet_name, completed)` | Returns a filtered view of the schedule by pet name and/or completion status. Both parameters are optional. |
+| **Recurring tasks** | `Task.next_occurrence()` + `Scheduler.mark_complete()` | When a `daily` or `weekly` task is marked complete, `timedelta` calculates the next due date (`today + 1 day` or `today + 7 days`) and a fresh task is automatically appended to the pet's list. |
+| **Conflict detection** | `Scheduler.detect_conflicts()` | Checks every pair of scheduled items for overlapping time intervals using the standard interval-overlap test: `A.start < B.end AND B.start < A.end`. Returns a list of human-readable warning strings instead of raising an exception. |
+
 ## Getting started
 
 ### Setup
