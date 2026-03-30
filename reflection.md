@@ -41,14 +41,19 @@
 **a. Constraints and priorities**
 
 - What constraints does your scheduler consider (for example: time, priority, preferences)?
+    It only has a window of 8 am to 8pm. Also there are only 3 priority settings so it's not that accurate. 
 - How did you decide which constraints mattered most?
 
 **b. Tradeoffs**
 
 - Describe one tradeoff your scheduler makes.
     I decided to use local storage on your computer rather than trying to overcomplicate with a database.
+    
+     Also when it comes to the code for detect_conflicts the current implementation vs the suggestion one I chose the current one because of the slight performance enhancement. 
 - Why is that tradeoff reasonable for this scenario?
+    The local JSON storage is reasonable because it is a single user with a small number of pets and tasks. There isn't a need for a database as the coomplexity to set it up would outwigh the benefits.
 
+    For the early-break inplementation aka detect_conflicts, it;s reasonable because the manual index loop and break help if the user ever repeatedly is called since it stops checking pairs the moment it knows no further overlap is possible. I want to avoid unecessary comparisons
 ---
 
 ## 3. AI Collaboration
@@ -56,7 +61,9 @@
 **a. How you used AI**
 
 - How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
+    I used AI to help me refactor my initial ideas and improve them.
 - What kinds of prompts or questions were most helpful?
+    I liked using it to explain things and compare them. I find asking it for visualizations, charts, pro -con etc is helpful.
 
 **b. Judgment and verification**
 
@@ -84,10 +91,12 @@
 **a. What went well**
 
 - What part of this project are you most satisfied with?
+    I'm satisfied with how it came together faster and easier than I thought it would. I still found the sheer amount of code difficult but I thought this project came together nicely.
 
 **b. What you would improve**
 
 - If you had another iteration, what would you improve or redesign?
+    I would improve the UI of the task tracker I find it looks ugly but with the time constraint I can't seem to make it much better. Also I find that the organization of having multiple classes all in the pawpal_system file is messy to me and having 700+ lines in 1 file is way less readable than having 1 file for each class or 1 file for a group of similar classes. At first I was doing it that way for example a task.py file with task and taskDict classes in it. 
 
 **c. Key takeaway**
 
