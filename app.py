@@ -47,6 +47,7 @@ st.markdown("### Add a Task")
 
 priority_map = {"low": 1, "medium": 2, "high": 3}
 priority_label = {1: "low", 2: "medium", 3: "high"}
+priority_badge = {1: "🟢 low", 2: "🟡 medium", 3: "🔴 high"}
 
 col1, col2, col3, col4 = st.columns(4)
 with col1:
@@ -125,6 +126,20 @@ if "editing_task_id" not in st.session_state:
     st.session_state.editing_task_id = None
 
 if display_tasks:
+    hcol1, hcol2, hcol3, hcol4, hcol5, hcol6, hcol7, hcol8 = st.columns([3, 2, 2, 1, 1, 2, 1, 1])
+    with hcol1:
+        st.caption("Task")
+    with hcol2:
+        st.caption("Pet")
+    with hcol3:
+        st.caption("Due date")
+    with hcol4:
+        st.caption("Dur.")
+    with hcol5:
+        st.caption("Priority")
+    with hcol6:
+        st.caption("Pref. time")
+    st.divider()
     for task in display_tasks:
         is_editing = st.session_state.editing_task_id == task.task_id
 
@@ -171,10 +186,11 @@ if display_tasks:
                     pet_name=task.pet_name,
                     notes=task.notes,
                     task_id=task.task_id,
+                    completed=task.completed,
                 )
                 pet = find_pet(owner, task.pet_name)
                 if pet:
-                    pet.update_task(task.name, updated)
+                    pet.update_task(task.task_id, updated)
                     _repo.save(owner)
                 st.session_state.editing_task_id = None
                 st.rerun()
@@ -187,7 +203,10 @@ if display_tasks:
                 label = f"**{task.name}**"
                 if task.recurring:
                     label += f" ↻ {task.recurrence_interval}"
-                st.markdown(label + ("  ✓" if task.completed else ""))
+                if task.completed:
+                    st.markdown(f"~~{label}~~  ✓")
+                else:
+                    st.markdown(label)
             with tcol2:
                 st.write(task.pet_name or "—")
             with tcol3:
@@ -195,7 +214,7 @@ if display_tasks:
             with tcol4:
                 st.write(f"{task.duration}m")
             with tcol5:
-                st.write(priority_label[task.priority])
+                st.write(priority_badge[task.priority])
             with tcol6:
                 if task.preferred_time is not None:
                     st.write(f"pref: {minutes_to_time(task.preferred_time).strftime('%I:%M %p').lstrip('0')}")
@@ -209,7 +228,7 @@ if display_tasks:
                 if st.button("Delete", key=f"del_{task.task_id}"):
                     pet = find_pet(owner, task.pet_name)
                     if pet:
-                        pet.remove_task(task.name)
+                        pet.remove_task(task.task_id)
                         _repo.save(owner)
                     st.rerun()
 else:
@@ -245,6 +264,15 @@ if today_tasks:
 
     # Render each task as a row with a Mark Complete button
     st.markdown("---")
+    rh1, rh2, rh3, rh4, rh5 = st.columns([4, 2, 1, 1, 2])
+    with rh1:
+        st.caption("Task")
+    with rh2:
+        st.caption("Pet")
+    with rh3:
+        st.caption("Dur.")
+    with rh4:
+        st.caption("Priority")
     for task in today_tasks:
         rcol1, rcol2, rcol3, rcol4, rcol5 = st.columns([4, 2, 1, 1, 2])
         with rcol1:
@@ -257,7 +285,7 @@ if today_tasks:
         with rcol3:
             st.write(f"{task.duration}m")
         with rcol4:
-            st.write(priority_label[task.priority])
+            st.write(priority_badge[task.priority])
         with rcol5:
             btn_key = f"done_{task.task_id}"
             if st.button("✓ Done", key=btn_key):
@@ -312,7 +340,7 @@ if st.button("Generate schedule"):
                     "start": f"{start_h:02d}:{start_m:02d}",
                     "end": f"{end_h:02d}:{end_m:02d}",
                     "duration (min)": t["duration"],
-                    "priority": priority_label[t["priority"]],
+                    "priority": priority_badge[t["priority"]],
                     "preferred": pref_str,
                     "pref honored": honored,
                 })
@@ -321,10 +349,3 @@ if st.button("Generate schedule"):
         if result["dropped"]:
             st.warning(f"{len(result['dropped'])} task(s) could not fit:")
             st.table([{"task": t["name"], "duration (min)": t["duration"]} for t in result["dropped"]])
-
-        scheduled_objs = [Task.from_dict(t) for t in result["scheduled"]]
-        conflicts = scheduler.detect_conflicts(scheduled_objs)
-        if conflicts:
-            st.error("Time-slot conflicts in final schedule:")
-            for w in conflicts:
-                st.error(w)

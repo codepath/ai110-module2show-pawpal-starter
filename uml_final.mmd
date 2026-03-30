@@ -1,0 +1,104 @@
+classDiagram
+    direction TB
+
+    class OwnerRepository {
+        + file_path : str
+        + save(owner) void
+        + load() Owner
+    }
+
+    class Owner {
+        + name : str
+        + pets : List~Pet~
+        + notes : List~str~
+        + add_pet(pet) void
+        + get_pets() List~Pet~
+        + get_all_tasks() List~Task~
+        + get_today_tasks(include_completed) List~Task~
+        + get_tasks_filtered(pet_name, status) List~Task~
+        + add_note(note) void
+        + get_notes() List~str~
+        + to_dict() OwnerDict
+        + from_dict(data)$ Owner
+    }
+
+    class Pet {
+        + name : str
+        + species : str
+        + tasks : List~Task~
+        + notes : List~str~
+        + add_task(task) void
+        + remove_task(task_name) void
+        + update_task(task_name, updated_task) void
+        + get_tasks() List~Task~
+        + get_today_tasks(include_completed) List~Task~
+        + add_note(note) void
+        + get_notes() List~str~
+        + to_dict() PetDict
+        + from_dict(data)$ Pet
+    }
+
+    class Task {
+        + task_id : str
+        + name : str
+        + duration : int
+        + priority : int
+        + due_time : date
+        + start_time : int
+        + preferred_time : int
+        + pet_name : str
+        + recurring : bool
+        + recurrence_interval : str
+        + completed : bool
+        + notes : List~str~
+        + is_due(target_date) bool
+        + is_due_today() bool
+        + mark_complete() Task
+        + advance_recurrence() void
+        + add_note(note) void
+        + get_notes() List~str~
+        + to_dict() TaskDict
+        + from_dict(data)$ Task
+        - _recurrence_days() int
+    }
+
+    class Scheduler {
+        + available_times : List~int~
+        + buffer_minutes : int
+        + generate_schedule(tasks) ScheduleResult
+        + sort_tasks_by_priority(tasks) List~Task~
+        + sort_tasks_by_time(tasks) List~Task~
+        + filter_tasks(tasks, pet_name, completed) List~Task~
+        + detect_conflicts(tasks) List~str~
+        - _fmt_time(minutes)$ str
+    }
+
+    class ScheduleResult {
+        <<TypedDict>>
+        + scheduled : List~TaskDict~
+        + dropped : List~TaskDict~
+    }
+
+    class TaskDict {
+        <<TypedDict>>
+        + task_id : str
+        + name : str
+        + duration : int
+        + priority : int
+        + due_time : str
+        + start_time : int
+        + preferred_time : int
+        + pet_name : str
+        + recurring : bool
+        + recurrence_interval : str
+        + completed : bool
+        + notes : List~str~
+    }
+
+    OwnerRepository --> Owner : loads / saves
+    Owner "1" *-- "0..*" Pet : owns
+    Pet "1" *-- "0..*" Task : has
+    Scheduler ..> Task : schedules
+    Scheduler ..> ScheduleResult : returns
+    ScheduleResult ..> TaskDict : contains
+    Task ..> TaskDict : serializes to

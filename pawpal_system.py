@@ -1,3 +1,4 @@
+from dataclasses import dataclass, field
 from typing import List, Optional, TypedDict, Union
 from datetime import date, timedelta
 import json
@@ -41,6 +42,7 @@ class OwnerDict(TypedDict):
     notes: List[str]
 
 
+@dataclass
 class Task:
     """Represents a pet care task with scheduling information.
     Converts dictionary data to an object-oriented format for easier manipulation and access. (for loading from JSON/file)
@@ -52,45 +54,24 @@ class Task:
         recurring: Whether the task repeats regularly
         notes: Additional notes about the task
     """
-    task_id: str
     name: str
     duration: int
     priority: int
-    due_time: Optional[date]
-    start_time: Optional[int]      # minutes from midnight; assigned by Scheduler
-    preferred_time: Optional[int]  # minutes from midnight; owner's preferred start time
-    pet_name: Optional[str]        # set when task is added to a Pet; used by Scheduler output
-    recurring: bool
-    completed: bool
-    notes: List[str]
+    due_time: Optional[date] = None
+    recurring: bool = False
+    recurrence_interval: Optional[str] = None   # "daily", "weekly", or None
+    start_time: Optional[int] = None            # minutes from midnight; assigned by Scheduler
+    preferred_time: Optional[int] = None        # minutes from midnight; owner's preferred start time
+    pet_name: Optional[str] = None              # set when task is added to a Pet; used by Scheduler output
+    notes: List[str] = field(default_factory=list)
+    task_id: Optional[str] = field(default=None)
+    completed: bool = False
 
-    def __init__(
-        self,
-        name: str,
-        duration: int,
-        priority: int,
-        due_time: Optional[date] = None,
-        recurring: bool = False,
-        recurrence_interval: Optional[str] = None,
-        start_time: Optional[int] = None,
-        preferred_time: Optional[int] = None,
-        pet_name: Optional[str] = None,
-        notes: List[str] = [],
-        task_id: Optional[str] = None,
-    ) -> None:
-        """Initialize a new Task with scheduling and metadata fields."""
-        self.task_id = task_id or str(uuid.uuid4())
-        self.name = name
-        self.duration = duration
-        self.completed = False
-        self.priority = priority
-        self.due_time = due_time
-        self.recurring = recurring
-        self.recurrence_interval = recurrence_interval  # "daily", "weekly", or None
-        self.start_time = start_time
-        self.preferred_time = preferred_time
-        self.pet_name = pet_name
-        self.notes = list(notes)
+    def __post_init__(self) -> None:
+        """Generate a UUID task_id if none was provided and defensively copy notes."""
+        if self.task_id is None:
+            self.task_id = str(uuid.uuid4())
+        self.notes = list(self.notes)  # defensive copy to avoid shared mutable default
 
     def is_due(self, target_date: Optional[date] = None) -> bool:
         """Check if task is due on a given date (defaults to today).
@@ -236,6 +217,7 @@ class Task:
         return f"{self.name}{pet} ({self.duration} min, priority {self.priority})"
 
 
+@dataclass
 class Pet:
     """Represents a pet with associated tasks and notes.
 
@@ -247,15 +229,8 @@ class Pet:
     """
     name: str
     species: str
-    tasks: List[Task]
-    notes: List[str]
-
-    def __init__(self, name: str, species: str) -> None:
-        """Initialize a new Pet with an empty task and notes list."""
-        self.name = name
-        self.species = species
-        self.tasks = []
-        self.notes = []
+    tasks: List[Task] = field(default_factory=list)
+    notes: List[str] = field(default_factory=list)
 
     def add_task(self, task: Task) -> None:
         """Add a task for this pet. Also sets task.pet_name to this pet's name
@@ -274,36 +249,36 @@ class Pet:
         self.tasks.append(task)
         task.pet_name = self.name
 
-    def remove_task(self, task_name: str) -> None:
-        """Remove a task by name.
+    def remove_task(self, task_id: str) -> None:
+        """Remove a task by its unique ID.
 
         Args:
-            task_name: Name of the task to remove.
+            task_id: UUID string of the task to remove.
 
         Raises:
-            ValueError: If no task with that name exists.
+            ValueError: If no task with that ID exists.
         """
         for task in self.tasks:
-            if task.name == task_name:
+            if task.task_id == task_id:
                 self.tasks.remove(task)
                 return
-        raise ValueError(f"No task named '{task_name}' found.")
+        raise ValueError(f"No task with id '{task_id}' found.")
 
-    def update_task(self, task_name: str, updated_task: Task) -> None:
-        """Replace an existing task with an updated version.
+    def update_task(self, task_id: str, updated_task: Task) -> None:
+        """Replace an existing task with an updated version, matched by ID.
 
         Args:
-            task_name: Name of the task to replace.
+            task_id: UUID string of the task to replace.
             updated_task: New Task instance to substitute in.
 
         Raises:
-            ValueError: If no task with that name exists.
+            ValueError: If no task with that ID exists.
         """
         for i, task in enumerate(self.tasks):
-            if task.name == task_name:
+            if task.task_id == task_id:
                 self.tasks[i] = updated_task
                 return
-        raise ValueError(f"No task named '{task_name}' found.")
+        raise ValueError(f"No task with id '{task_id}' found.")
 
     def get_today_tasks(self, include_completed: bool = False) -> List[Task]:
         """Return only tasks that are due today and not yet completed.
@@ -640,6 +615,62 @@ class Scheduler:
             New list of tasks sorted by priority in descending order.
         """
         return sorted(tasks, key=lambda t: (t.priority, t.is_due_today()), reverse=True)
+
+    def next_available_slot(
+        self,
+        tasks: List[Task],
+        duration: int,
+        buffer_minutes: Optional[int] = None,
+    ) -> Optional[int]:
+        """Find the earliest start time that fits a new task without overlapping existing ones.
+
+        Scans the available window (self.available_times[0] → self.available_times[-1])
+        for the first gap that can accommodate a task of the given duration, respecting
+        a buffer on either side of every already-scheduled task.
+
+        Algorithm:
+          1. Collect all occupied intervals [start, start+duration) from tasks that
+             already have a start_time, then sort them by start.
+          2. Walk the gaps between intervals (and before the first / after the last).
+          3. Return the start of the first gap that is wide enough for duration + buffers.
+
+        Args:
+            tasks: Tasks already on the schedule (must have start_time set to matter).
+            duration: Duration in minutes of the new task that needs a slot.
+            buffer_minutes: Gap to leave before and after existing tasks.
+                            Defaults to self.buffer_minutes.
+
+        Returns:
+            Start time in minutes from midnight, or None if no slot fits in the window.
+        """
+        if not self.available_times:
+            return None
+
+        buf = buffer_minutes if buffer_minutes is not None else self.buffer_minutes
+        window_start = self.available_times[0]
+        window_end = self.available_times[-1]
+
+        # Build sorted list of (start, end) for every already-placed task
+        occupied: List[tuple] = sorted(
+            (t.start_time, t.start_time + t.duration)
+            for t in tasks
+            if t.start_time is not None
+        )
+
+        # Probe each gap in the window
+        cursor = window_start
+        for occ_start, occ_end in occupied:
+            gap_end = occ_start - buf          # must finish before buffer preceding this task
+            if cursor + duration <= gap_end:
+                return cursor                  # fits in the gap before this task
+            # Jump past this task (plus trailing buffer)
+            cursor = max(cursor, occ_end + buf)
+
+        # Check the remaining tail of the window
+        if cursor + duration <= window_end:
+            return cursor
+
+        return None  # no slot found
 
     @staticmethod
     def _fmt_time(minutes: int) -> str:

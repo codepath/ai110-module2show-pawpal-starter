@@ -1,18 +1,5 @@
 {
   "name": "Jordan",
-  "pets": [
-    {
-      "name": "Mochi",
-      "species": "dog",
-      "tasks": [],
-      "notes": []
-    },
-    {
-      "name": "sfa",
-      "species": "dog",
-      "tasks": [],
-      "notes": []
-    }
-  ],
+  "pets": [],
   "notes": []
 }

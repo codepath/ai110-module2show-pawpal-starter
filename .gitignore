@@ -3,4 +3,5 @@ __pycache__/
 .venv_new/
 .pytest_cache/
 .DS_Store
-*.code-workspace.claude/
+*.code-workspace
+.claude/

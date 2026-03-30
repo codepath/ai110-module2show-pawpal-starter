@@ -184,22 +184,24 @@ def test_advance_recurrence_moves_due_date_forward():
 
 def test_remove_task_decreases_count():
     pet = Pet("Buddy", "dog")
-    pet.add_task(Task("Walk", duration=30, priority=3))
-    pet.remove_task("Walk")
+    task = Task("Walk", duration=30, priority=3)
+    pet.add_task(task)
+    pet.remove_task(task.task_id)
     assert len(pet.get_tasks()) == 0
 
 
 def test_remove_nonexistent_task_raises():
     pet = Pet("Buddy", "dog")
     with pytest.raises(ValueError):
-        pet.remove_task("Nonexistent")
+        pet.remove_task("nonexistent-uuid")
 
 
 def test_update_task_replaces_task():
     pet = Pet("Buddy", "dog")
-    pet.add_task(Task("Walk", duration=30, priority=1))
+    task = Task("Walk", duration=30, priority=1)
+    pet.add_task(task)
     updated = Task("Walk", duration=45, priority=2)
-    pet.update_task("Walk", updated)
+    pet.update_task(task.task_id, updated)
     assert pet.get_tasks()[0].duration == 45
     assert pet.get_tasks()[0].priority == 2
 
@@ -207,7 +209,7 @@ def test_update_task_replaces_task():
 def test_update_nonexistent_task_raises():
     pet = Pet("Buddy", "dog")
     with pytest.raises(ValueError):
-        pet.update_task("Ghost task", Task("Ghost task", duration=10, priority=1))
+        pet.update_task("nonexistent-uuid", Task("Ghost task", duration=10, priority=1))
 
 
 # ── Owner helpers ─────────────────────────────────────────────────────────────
