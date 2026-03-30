@@ -234,3 +234,126 @@ def test_get_today_tasks_excludes_future_tasks():
     today = owner.get_today_tasks()
     assert len(today) == 1
     assert today[0].name == "Today task"
+
+
+# ── Sorting correctness ───────────────────────────────────────────────────────
+
+def test_sort_by_time_returns_chronological_order():
+    """Tasks with earlier due_time must come first."""
+    scheduler = Scheduler([8 * 60, 20 * 60])
+    yesterday = date.today() - timedelta(days=1)
+    tomorrow  = date.today() + timedelta(days=1)
+    tasks = [
+        Task("Far future", duration=10, priority=1, due_time=tomorrow),
+        Task("Overdue",    duration=10, priority=1, due_time=yesterday),
+        Task("Today",      duration=10, priority=1, due_time=date.today()),
+    ]
+    result = scheduler.sort_tasks_by_time(tasks)
+    assert [t.name for t in result] == ["Overdue", "Today", "Far future"]
+
+
+def test_sort_by_time_no_due_date_sorts_last():
+    """Tasks with no due_time should fall to the end of the sorted list."""
+    scheduler = Scheduler([8 * 60, 20 * 60])
+    tasks = [
+        Task("No date",   duration=10, priority=1, due_time=None),
+        Task("Has date",  duration=10, priority=1, due_time=date.today()),
+    ]
+    result = scheduler.sort_tasks_by_time(tasks)
+    assert result[0].name == "Has date"
+    assert result[-1].name == "No date"
+
+
+def test_sort_by_time_same_due_date_ordered_by_start_time():
+    """When two tasks share a due_date, the earlier start_time comes first."""
+    scheduler = Scheduler([8 * 60, 20 * 60])
+    t1 = Task("Morning", duration=20, priority=1, due_time=date.today())
+    t2 = Task("Evening", duration=20, priority=1, due_time=date.today())
+    t1.start_time = 8 * 60       # 8:00 AM
+    t2.start_time = 18 * 60      # 6:00 PM
+    result = scheduler.sort_tasks_by_time([t2, t1])  # deliberately reversed
+    assert result[0].name == "Morning"
+    assert result[1].name == "Evening"
+
+
+# ── Recurrence logic (expanded) ───────────────────────────────────────────────
+
+def test_daily_recurrence_next_task_due_tomorrow():
+    """Completing a daily task creates a new task due exactly one day later."""
+    task = Task("Feed", duration=10, priority=2,
+                due_time=date.today(), recurring=True, recurrence_interval="daily",
+                pet_name="Buddy")
+    next_task = task.mark_complete()
+    assert next_task is not None
+    assert next_task.due_time == date.today() + timedelta(days=1)
+
+
+def test_recurrence_inherits_fields():
+    """The returned next-occurrence task preserves name, duration, priority, and pet."""
+    task = Task("Walk", duration=30, priority=3,
+                due_time=date.today(), recurring=True, recurrence_interval="weekly",
+                pet_name="Luna")
+    next_task = task.mark_complete()
+    assert next_task.name == "Walk"
+    assert next_task.duration == 30
+    assert next_task.priority == 3
+    assert next_task.pet_name == "Luna"
+    assert next_task.completed == False
+
+
+def test_completing_non_recurring_returns_none_and_marks_done():
+    """Non-recurring mark_complete returns None and sets completed=True on the original."""
+    task = Task("One-off bath", duration=20, priority=1)
+    result = task.mark_complete()
+    assert result is None
+    assert task.completed == True
+
+
+# ── Conflict detection (expanded) ─────────────────────────────────────────────
+
+def test_exact_same_start_time_flags_conflict():
+    """Two tasks starting at the same minute are always overlapping."""
+    scheduler = Scheduler([8 * 60, 20 * 60])
+    tasks = [
+        make_task("Feed Buddy", 15, 2, start_time=9 * 60, pet_name="Buddy"),
+        make_task("Feed Luna",  15, 1, start_time=9 * 60, pet_name="Luna"),
+    ]
+    warnings = scheduler.detect_conflicts(tasks)
+    assert len(warnings) == 1
+    assert "Feed Buddy" in warnings[0]
+    assert "Feed Luna" in warnings[0]
+
+
+def test_no_conflict_when_tasks_end_exactly_when_next_begins():
+    """Task A ending at minute X and Task B starting at minute X is NOT a conflict."""
+    scheduler = Scheduler([8 * 60, 20 * 60])
+    tasks = [
+        make_task("Bath",  30, 2, start_time=8 * 60,        pet_name="Buddy"),
+        make_task("Brush", 10, 1, start_time=8 * 60 + 30,   pet_name="Buddy"),
+    ]
+    # 8:00 + 30 min = 8:30 == Brush start_time → boundary is clean, no overlap
+    assert scheduler.detect_conflicts(tasks) == []
+
+
+# ── Edge cases ────────────────────────────────────────────────────────────────
+
+def test_pet_with_no_tasks_returns_empty_list():
+    """A brand-new pet should have zero tasks without raising any error."""
+    pet = Pet("Ghost", "cat")
+    assert pet.get_tasks() == []
+    assert pet.get_today_tasks() == []
+
+
+def test_detect_conflicts_empty_list_is_safe():
+    """detect_conflicts on an empty list should return [] not crash."""
+    scheduler = Scheduler([8 * 60, 20 * 60])
+    assert scheduler.detect_conflicts([]) == []
+
+
+def test_task_longer_than_window_is_dropped():
+    """A single task whose duration exceeds the available window must be dropped."""
+    scheduler = Scheduler([8 * 60, 8 * 60 + 20])  # only 20-minute window
+    tasks = [Task("Long bath", duration=60, priority=5, due_time=date.today())]
+    result = scheduler.generate_schedule(tasks)
+    assert result["scheduled"] == []
+    assert result["dropped"][0]["name"] == "Long bath"
