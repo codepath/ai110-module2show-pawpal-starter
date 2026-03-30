@@ -237,7 +237,7 @@ Implement Owner.set_availability() in pawpal/pawpal_system.py (line 81).
 
   The tests will be simple — create an object, call a method, assert the result. You should be able to read them and immediately understand what they do.
 
-  The key principle
+  The key principle1
 
   Tests verify behavior. The behavior has to exist first. If you ask Claude to "write tests for mark_complete" when there's no mark_complete, it'll either hallucinate an implementation or write tests that fail for the
   wrong reason. Either way, you'll spend more time debugging Claude's guess than you saved.
