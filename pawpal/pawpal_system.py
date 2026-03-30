@@ -64,6 +64,7 @@ class Pet:
 
     def add_task(self, task: Task) -> None:
         """Add a new task to the pet's list of tasks."""
+        task.pet_name = self.name
         self._tasks.append(task)
 
 
@@ -111,6 +112,7 @@ class Task:
     assigned_day: Optional[str] = None
     scheduled_time: Optional[datetime.time] = None
     completed: bool = False
+    pet_name: Optional[str] = None
 
     def mark_complete(self) -> None:
         """Mark the task as completed."""
@@ -290,6 +292,39 @@ class Scheduler:
             )
         return result
 
+    def sort_by_time(self, tasks: list[Task]) -> list[Task]:
+        """Sort tasks in ascending order of their scheduled_time attribute."""
+        result = sorted(tasks, key=lambda t: t.scheduled_time or datetime.time.min)
+
+        assert len(result) == len(tasks), f"expected {len(tasks)} tasks, got {len(result)}"
+        for i in range(len(result) - 1):
+            time_a = result[i].scheduled_time or datetime.time.min
+            time_b = result[i + 1].scheduled_time or datetime.time.min
+            assert time_a <= time_b, (
+                f"tasks not sorted by time: {time_a} before {time_b}"
+            )
+        return result
+
+    def filter_by_pet(self, tasks: list[Task], pet_name: str) -> list[Task]:
+        """Filter tasks to only those assigned to a specific pet by name."""
+        result = [t for t in tasks if t.pet_name == pet_name]
+
+        assert all(t.pet_name == pet_name for t in result), (
+            f"filter_by_pet returned a task not belonging to {pet_name}"
+        )
+        assert len(result) <= len(tasks), f"filtered more tasks ({len(result)}) than provided ({len(tasks)})"
+        return result
+
+    def filter_by_completion(self, tasks: list[Task], completed: bool) -> list[Task]:
+        """Filter tasks by their completion status."""
+        result = [t for t in tasks if t.completed == completed]
+
+        assert all(t.completed == completed for t in result), (
+            f"filter_by_completion returned a task with completed={not completed}"
+        )
+        assert len(result) <= len(tasks), f"filtered more tasks ({len(result)}) than provided ({len(tasks)})"
+        return result
+
     def check_constraints(self, task: Task, window: AvailabilityWindow) -> bool:
         """Check if a task can be scheduled within a specific availability window."""
         fits = task.duration_minutes <= window.duration_minutes()
@@ -326,3 +361,26 @@ class Scheduler:
         result = " ".join(lines)
         assert isinstance(result, str) and len(result) > 0, "rationale must be a non-empty string"
         return result
+
+    def detect_conflicts(self, tasks: list[Task]) -> list[tuple[Task, Task]]:
+        """Detect scheduling conflicts where two tasks overlap in the same time slot."""
+        scheduled = [t for t in tasks if t.scheduled_time is not None]
+        scheduled = sorted(scheduled, key=lambda t: t.scheduled_time or datetime.time.min)
+        conflicts: list[tuple[Task, Task]] = []
+
+        for i in range(len(scheduled)):
+            start_a = scheduled[i].scheduled_time
+            end_a = (datetime.datetime.combine(datetime.date.today(), start_a)
+                     + datetime.timedelta(minutes=scheduled[i].duration_minutes)).time()
+            for j in range(i + 1, len(scheduled)):
+                start_b = scheduled[j].scheduled_time
+                if start_b < end_a:
+                    conflicts.append((scheduled[i], scheduled[j]))
+
+        assert all(isinstance(pair, tuple) and len(pair) == 2 for pair in conflicts), (
+            "each conflict must be a tuple of two tasks"
+        )
+        assert all(pair[0] in tasks and pair[1] in tasks for pair in conflicts), (
+            "conflict contains a task not in the original list"
+        )
+        return conflicts
