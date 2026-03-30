@@ -33,6 +33,26 @@ Beyond basic priority sorting, PawPal+ includes four algorithmic features:
 | **Recurring tasks** | `Task.next_occurrence()` + `Scheduler.mark_complete()` | When a `daily` or `weekly` task is marked complete, `timedelta` calculates the next due date (`today + 1 day` or `today + 7 days`) and a fresh task is automatically appended to the pet's list. |
 | **Conflict detection** | `Scheduler.detect_conflicts()` | Checks every pair of scheduled items for overlapping time intervals using the standard interval-overlap test: `A.start < B.end AND B.start < A.end`. Returns a list of human-readable warning strings instead of raising an exception. |
 
+## Testing PawPal+
+
+Run the full test suite with:
+
+```bash
+python -m pytest
+```
+
+The suite contains **45 tests** across five categories:
+
+| Category | What's covered |
+|---|---|
+| Task lifecycle | `complete()`, `reset()`, priority ordering, recurrence via `next_occurrence()` |
+| Pet ownership | add/remove tasks, pending/completed filtering, species defaults |
+| Owner aggregation | cross-pet task access, empty-owner edge cases |
+| Scheduler algorithms | build, sort by time, filter by pet/status, mark-complete with recurrence |
+| Conflict detection | overlapping slots flagged, adjacent slots not flagged, cross-pet conflicts |
+
+**Confidence:** ★★★★☆ — all happy paths and most edge cases covered. Known gaps: midnight overflow in `_add_minutes`, Streamlit UI layer not tested.
+
 ## Getting started
 
 ### Setup
