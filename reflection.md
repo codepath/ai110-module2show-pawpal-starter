@@ -5,12 +5,20 @@
 **a. Initial design**
 
 - Briefly describe your initial UML design.
+  - The UML diagram includes:
+    - domain entities, these are "real world" entities/main actors, within our model this would be the **Owner** and **Pet**. The **Owner** is the primary user, they own **Pet**(s), and declare **AvailabilityWindows** and manage **Tasks**
+    - Task model, Tasks has a type (**TaskType** enum), urgenecy (**Priorty** enum), and reccurence pattern (**ReccurenceScope** enum)
+    - Schedule outputs, **DailySchedule** and **WeeklyMonthlyPlan** are two view of the generated schedule, with each holding a list of Tasks.
+    - Schedule engine,**Scheduler** is the logic core; it takes the tasks and availability windows as inputs and produces  the schedule outputs
 - What classes did you include, and what responsibilities did you assign to each?
+  - Captilized and Bolded nouns within (a) are the classes, they can also be found in the pawpal_uml.md
 
 **b. Design changes**
 
 - Did your design change during implementation?
+  - I decided to first outliine my functional and non-functional requirements prior to starting. Reading the writeup/readme left me with a good amount of room/ambiguity to refine what exactly I wanted. I first read the write up, and then practiced create FR and NFRs, I then went to claude and asked what FR and NFRs is it could extract, I then compared, refined and produced a final version of the FR and NFRs that I was able to create a UML diagram with. Using this process allowed me to process and solve ambiguities within my understanding of the project rather than in the middle of the implmenetation.
 - If yes, describe at least one change and why you made it.
+  - n/a
 
 ---
 
