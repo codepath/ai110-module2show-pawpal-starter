@@ -42,6 +42,18 @@ pip install -r requirements.txt
 6. Connect your logic to the Streamlit UI in `app.py`.
 7. Refine UML so it matches what you actually built.
 
+## Smarter Scheduling
+
+PawPal+ uses a priority-based scheduling engine to build daily care plans automatically. The `Scheduler` ranks tasks by priority (high, medium, low) and fits them into the owner's availability windows for each day. Tasks that don't fit are dropped rather than double-booked. The system also supports weekly and monthly recurring tasks, assigns them to specific days, and includes them alongside the daily schedule.
+
+Key capabilities:
+
+- **Priority ordering** — high-priority tasks (e.g. medication, walks) are scheduled first.
+- **Constraint checking** — each task's duration is validated against the available window before placement.
+- **Conflict detection** — overlapping time slots between tasks are identified and flagged.
+- **Filtering** — tasks can be filtered by pet, completion status, or recurrence scope.
+- **Rationale generation** — the scheduler produces a plain-text explanation of why the plan looks the way it does.
+
 ## Testing PawPal+
 
 ### Running the Tests
