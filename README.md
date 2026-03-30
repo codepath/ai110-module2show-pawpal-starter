@@ -1,74 +1,102 @@
-# PawPal+ (Module 2 Project)
+# PawPal+ 🐾
 
-You are building **PawPal+**, a Streamlit app that helps a pet owner plan care tasks for their pet.
+A Streamlit app that helps a pet owner plan and manage daily care tasks across multiple pets — built with a custom scheduling engine, automated tests, and a clean UI.
 
-## Scenario
+**Built by:** Yerlandana
+**Course:** AI110 — Module 2 Project
 
-A busy pet owner needs help staying consistent with pet care. They want an assistant that can:
+---
 
-- Track pet care tasks (walks, feeding, meds, enrichment, grooming, etc.)
-- Consider constraints (time available, priority, owner preferences)
-- Produce a daily plan and explain why it chose that plan
+## What I Built
 
-Your job is to design the system first (UML), then implement the logic in Python, then connect it to the Streamlit UI.
+PawPal+ is a pet care planning assistant. Given an owner's available time window and a list of care tasks (walks, feeding, grooming, etc.), the app generates a prioritized daily schedule and explains why each task was placed when it was.
 
-## What you will build
+The system is built in three layers:
+- **`pawpal_system.py`** — pure Python logic (no UI dependency)
+- **`app.py`** — Streamlit UI wired to the logic layer
+- **`tests/test_pawpal.py`** — 45 automated tests
 
-Your final app should:
+---
 
-- Let a user enter basic owner + pet info
-- Let a user add/edit tasks (duration + priority at minimum)
-- Generate a daily schedule/plan based on constraints and priorities
-- Display the plan clearly (and ideally explain the reasoning)
-- Include tests for the most important scheduling behaviors
+## Features
 
-## Smarter Scheduling
+### Core
+- Register an owner with a custom availability window (e.g. 08:00–20:00)
+- Add multiple pets with species-appropriate default tasks
+- Add custom care tasks with title, duration, priority, and frequency
+- Generate a daily schedule sorted by priority then duration
 
-Beyond basic priority sorting, PawPal+ includes four algorithmic features:
+### Smarter Scheduling
 
-| Feature | Method | How it works |
-|---|---|---|
-| **Sort by time** | `Scheduler.sort_by_time()` | Sorts scheduled items by `start_time` using a lambda key on zero-padded `"HH:MM"` strings, which compare correctly with Python's default string ordering. |
-| **Filter tasks** | `Scheduler.filter_tasks(pet_name, completed)` | Returns a filtered view of the schedule by pet name and/or completion status. Both parameters are optional. |
-| **Recurring tasks** | `Task.next_occurrence()` + `Scheduler.mark_complete()` | When a `daily` or `weekly` task is marked complete, `timedelta` calculates the next due date (`today + 1 day` or `today + 7 days`) and a fresh task is automatically appended to the pet's list. |
-| **Conflict detection** | `Scheduler.detect_conflicts()` | Checks every pair of scheduled items for overlapping time intervals using the standard interval-overlap test: `A.start < B.end AND B.start < A.end`. Returns a list of human-readable warning strings instead of raising an exception. |
+| Feature | How it works |
+|---|---|
+| **Sort by time** | `sort_by_time()` orders the schedule by start time using a lambda key on zero-padded `"HH:MM"` strings |
+| **Filter tasks** | `filter_tasks(pet_name, completed)` returns a filtered view by pet or completion status |
+| **Recurring tasks** | When a `daily`/`weekly` task is marked complete, `timedelta` computes the next due date and appends a fresh task automatically |
+| **Conflict detection** | `detect_conflicts()` checks every pair of slots for overlap using `A.start < B.end AND B.start < A.end` — returns warnings instead of crashing |
+
+### UI
+- View toggle: All tasks / Sorted by time / Pending only / Completed only
+- Per-pet filter dropdown
+- Conflict warnings displayed as `st.error` banners
+- Mark tasks complete directly from the app (triggers recurrence)
+- Skipped tasks shown in an expander with a tip for the user
+
+---
+
+## Getting Started
+
+```bash
+python -m venv .venv
+source .venv/bin/activate       # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+To run the CLI demo:
+```bash
+python main.py
+```
+
+---
 
 ## Testing PawPal+
-
-Run the full test suite with:
 
 ```bash
 python -m pytest
 ```
 
-The suite contains **45 tests** across five categories:
+**45 tests** across five categories:
 
 | Category | What's covered |
 |---|---|
-| Task lifecycle | `complete()`, `reset()`, priority ordering, recurrence via `next_occurrence()` |
+| Task lifecycle | `complete()`, `reset()`, priority ordering, recurrence for daily/weekly/as-needed |
 | Pet ownership | add/remove tasks, pending/completed filtering, species defaults |
 | Owner aggregation | cross-pet task access, empty-owner edge cases |
 | Scheduler algorithms | build, sort by time, filter by pet/status, mark-complete with recurrence |
 | Conflict detection | overlapping slots flagged, adjacent slots not flagged, cross-pet conflicts |
 
-**Confidence:** ★★★★☆ — all happy paths and most edge cases covered. Known gaps: midnight overflow in `_add_minutes`, Streamlit UI layer not tested.
+**Confidence: ★★★★☆** — all happy paths and most edge cases covered. Known gaps: midnight overflow in `_add_minutes`, Streamlit UI layer not tested.
 
-## Getting started
+---
 
-### Setup
+## Project Structure
 
-```bash
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+```
+pawpal_system.py   # Core logic: Task, Pet, Owner, ScheduledItem, Scheduler
+app.py             # Streamlit UI
+main.py            # CLI demo script
+tests/
+  test_pawpal.py   # 45 automated tests
+reflection.md      # Design decisions, tradeoffs, AI collaboration notes
 ```
 
-### Suggested workflow
+---
 
-1. Read the scenario carefully and identify requirements and edge cases.
-2. Draft a UML diagram (classes, attributes, methods, relationships).
-3. Convert UML into Python class stubs (no logic yet).
-4. Implement scheduling logic in small increments.
-5. Add tests to verify key behaviors.
-6. Connect your logic to the Streamlit UI in `app.py`.
-7. Refine UML so it matches what you actually built.
+## Reflection
+
+See [reflection.md](reflection.md) for full design notes including:
+- UML class diagram (Mermaid.js)
+- Scheduling logic and tradeoffs
+- How AI tools were used (and when suggestions were rejected)
+- Testing strategy and confidence assessment
