@@ -22,6 +22,15 @@ Your final app should:
 - Display the plan clearly (and ideally explain the reasoning)
 - Include tests for the most important scheduling behaviors
 
+## Smarter Scheduling
+
+Recent improvements make the scheduler more practical for everyday pet care:
+
+- **Recurring task rollover** for `daily` and `weekly` tasks using automatic next occurrences
+- **Priority-based tie-breakers** that favor health-related and shorter tasks when times match
+- **Lightweight conflict warnings** for tasks scheduled at the same exact time
+- **Due-date filtering** so completed or future tasks do not clutter today's plan
+
 ## Getting started
 
 ### Setup
@@ -41,3 +50,26 @@ pip install -r requirements.txt
 5. Add tests to verify key behaviors.
 6. Connect your logic to the Streamlit UI in `app.py`.
 7. Refine UML so it matches what you actually built.
+
+### Testing PawPal+
+python -m pytest
+1. confirm task completion with mark_complete()
+2. make sure task list grow when new task is added
+3. make sure tasks are returned in chronological order and, for same time tasks, use priority, health category, and duration tie breakers.
+4. confirms a completed daily/weekly task creates the next occurrence with right features
+5. make sure that duplicate task are flagged
+6. verifies that "once" tasks do not create duplicate
+confidence lever: 4.5/5
+
+### Features/demo
+1. Sorting by time
+2. Priority tie-breakers
+3. Health-first ordering
+4. Shorter-task preference
+5. Conflict warnings
+6. Daily and weekly recurrence rollover
+7. Due-date filtering
+8. Monthly recurrence support
+<img src = 'pic1.png' title='pic1' width='' alt='picture' />
+<img src = 'pic2.png' title='pic2' width='' alt='picture' />
+<img src = 'pic3.png' title='pic3' width='' alt='picture' />
