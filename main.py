@@ -89,26 +89,6 @@ if conflicts:
 else:
     print("  ✅  No conflicts detected.")
 
-# Now inject two overlapping tasks to trigger a conflict warning
-section("CONFLICT DEMO  (two tasks forced to same time slot)")
-conflict_owner = Owner("TestOwner", available_start="09:00", available_end="12:00")
-rex = Pet("Rex", "dog")
-rex.add_task(Task("Walk A",   60, "high"))   # 09:00–10:00
-rex.add_task(Task("Walk B",   60, "high"))   # also starts 09:00 — conflict!
-conflict_owner.add_pet(rex)
-
-conflict_sched = Scheduler(conflict_owner)
-conflict_sched.build_schedule()
-
-# Manually force both into the same slot to demonstrate detection
-from pawpal_system import ScheduledItem
-conflict_sched.schedule = [
-    ScheduledItem(rex, rex.tasks[0], "09:00", "10:00", "demo"),
-    ScheduledItem(rex, rex.tasks[1], "09:30", "10:30", "demo"),  # overlaps
-]
-for w in conflict_sched.detect_conflicts():
-    print(f"  {w}")
-
 # ── Summary ──────────────────────────────────────────────────────────────────
 print()
 divider("=")
