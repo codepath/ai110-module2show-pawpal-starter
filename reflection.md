@@ -7,10 +7,21 @@
 - Briefly describe your initial UML design.
 - What classes did you include, and what responsibilities did you assign to each?
 
+- I have 4 class, owner, pet, task, scheduler
+- The owner, has all the descriptive information of the owner and their general availability
+- The pet has all the descriptive information of the pet and some relevant functions, such as get_name(), get_species(), add_special_need(), get_spectial_needs()
+- The task has the task_id, name, task_type, duration_minutes, and some functions like get_duration(), get_priority(), set_priority, get_task_type()
+
+
+
 **b. Design changes**
 
 - Did your design change during implementation?
 - If yes, describe at least one change and why you made it.
+
+-The model wanted the owner to directly manage the pets. I chose not to do that since it wasn't directly relevant. 
+-The scheduler is the central coordinator (connects owner+pet+tasks)
+-4.5 also wanted to create a test file
 
 ---
 
@@ -21,10 +32,16 @@
 - What constraints does your scheduler consider (for example: time, priority, preferences)?
 - How did you decide which constraints mattered most?
 
+It was constrained by everything being hard coded. 
+
 **b. Tradeoffs**
 
 - Describe one tradeoff your scheduler makes.
 - Why is that tradeoff reasonable for this scenario?
+
+-it has a greedly algorithmic tradeoff, picking the highest priority task first. 
+-topoligcal stort: it sacrifices some optimization
+-madatory first: may crowd out others
 
 ---
 
