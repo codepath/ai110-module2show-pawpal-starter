@@ -1,0 +1,32 @@
+classDiagram
+class Owner {
+  +pets: List~Pet~
+}
+
+class Pet {
+  +name: string
+  +species: string
+  +age: int
+  +getRecommendedFrequence()
+  +getHealthConstraints()
+}
+
+class Task {
+  +title: string
+  +duration: int
+  +priority: int
+  +giveUrgencyScore()
+  +getRequiredTimeBuffer()
+}
+
+class Scheduler {
+  +constraintsList: List
+  +sortTasksByPriority()
+  +findAvailableSlot()
+  +generateOptimizedSchedule()
+}
+
+Owner "1" o-- "0..*" Pet : owns
+Pet "1" --> "0..*" Task : requires
+Scheduler "1" ..> "0..*" Task : schedules
+Scheduler "1" ..> "0..*" Pet : considers

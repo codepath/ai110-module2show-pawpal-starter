@@ -1,6 +1,6 @@
 # PawPal+ (Module 2 Project)
 
-You are building **PawPal+**, a Streamlit app that helps a pet owner plan care tasks for their pet.
+**PawPal+** is a small Python backend plus a Streamlit shell that helps a pet owner plan care tasks (walks, feeding, meds, enrichment) under time and priority constraints.
 
 ## Scenario
 
@@ -22,6 +22,23 @@ Your final app should:
 - Display the plan clearly (and ideally explain the reasoning)
 - Include tests for the most important scheduling behaviors
 
+## Project layout
+
+| Path | Purpose |
+|------|---------|
+| `pawpal_system.py` | Domain model (`Task`, `Pet`, `Owner`) and `Scheduler` (priority sort + day packing) |
+| `main.py` | CLI demo: sample pets/tasks, prints an optimized schedule |
+| `app.py` | Streamlit UI starter (wire your scheduler here when ready) |
+| `tests/` | `pytest` tests for core behaviors |
+| `uml.mmd` | UML source (Mermaid) |
+
+## Backend overview
+
+- **`Task`** — Care item: description, optional preferred time (`time_minutes` from midnight), frequency, duration, priority, and `completed`. Urgency scoring drives ordering; `mark_complete()` sets done.
+- **`Pet`** — Name, species, age, and a list of `Task` instances. Species/age inform recommended care hints and health notes.
+- **`Owner`** — Holds `Pet` list; exposes flat views of all tasks (with or without pet pairing).
+- **`Scheduler`** — Given an `Owner`, considers only incomplete tasks, sorts by urgency/priority, then assigns non-overlapping start times within a day window (default 07:00–22:00), respecting preferred times when they fit.
+
 ## Getting started
 
 ### Setup
@@ -32,7 +49,27 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### Suggested workflow
+### Run the CLI demo
+
+```bash
+python main.py
+```
+
+Prints a sorted daily plan for the sample pets defined in `main.py`.
+
+### Run the Streamlit app
+
+```bash
+streamlit run app.py
+```
+
+### Run tests
+
+```bash
+pytest tests/ -v
+```
+
+## Suggested workflow
 
 1. Read the scenario carefully and identify requirements and edge cases.
 2. Draft a UML diagram (classes, attributes, methods, relationships).
