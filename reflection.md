@@ -10,7 +10,13 @@
 
 - Briefly describe your initial UML design.
 - What classes did you include, and what responsibilities did you assign to each?
-
+  - Pet was chosen so we can focus on the amimal being care for.
+  - Owner was chosen so we can know owns the pet and what constrains that they have (scheduling limits)
+  - Responsibility was chosen so we can track all of the requirements needed to care for the pet.
+  - Constraints was chosen because it list all of the factors that will limit the recommended daily plan of the pet.
+  - Plan was chosen because it holds the plan that was chosen for the pet.
+  - Explanation was chosen because contains the information as to why the specific plan was chosen.
+  
 **b. Design changes**
 
 - Did your design change during implementation?
