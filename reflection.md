@@ -2,6 +2,10 @@
 
 ## 1. System Design
 
+- adding a pet and their info
+- getting the today's task for the pet
+- receiving explanations as to why those tasks were 
+
 **a. Initial design**
 
 - Briefly describe your initial UML design.
