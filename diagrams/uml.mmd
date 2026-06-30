@@ -26,12 +26,14 @@ classDiagram
 
     class ScheduledItem {
         +Task task
+        +str pet_name
         +str start_time
         +str reason
     }
 
     class Scheduler {
-        +build_plan(owner Owner, available_minutes int) list~ScheduledItem~
+        +build_plan(owner Owner, available_minutes int, day_start str) list~ScheduledItem~
+        +filter_tasks(tasks list~Task~, available_minutes int) list~Task~
         +sort_tasks(tasks list~Task~) list~Task~
         +explain(item ScheduledItem) str
     }
