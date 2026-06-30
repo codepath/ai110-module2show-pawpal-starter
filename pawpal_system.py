@@ -145,6 +145,15 @@ class Scheduler:
     start_time: str  # "HH:MM"
     end_time: str  # "HH:MM"
 
+    def start_minutes(self) -> int:
+        """Start time as minutes since midnight; the key used for sorting."""
+        return to_minutes(self.start_time)
+
+    @staticmethod
+    def sort_by_time(items: list[Scheduler]) -> list[Scheduler]:
+        """Return ``items`` sorted into clock order by their start time."""
+        return sorted(items, key=lambda item: item.start_minutes())
+
 
 @dataclass
 class Plan:
