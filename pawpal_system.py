@@ -138,7 +138,7 @@ class Explanation:
 
 
 @dataclass
-class ScheduledItem:
+class Scheduler:
     """One responsibility placed at a concrete time slot in the plan."""
 
     responsibility: Responsibility
@@ -159,7 +159,7 @@ class Plan:
     date: str = ""
 
     # Results, populated by build().
-    scheduled: list[ScheduledItem] = field(default_factory=list)
+    scheduled: list[Scheduler] = field(default_factory=list)
     skipped: list[Responsibility] = field(default_factory=list)
     explanation: Explanation = field(default_factory=Explanation)
 
@@ -222,7 +222,7 @@ class Plan:
         #    slot; flexible tasks flow from a moving cursor, nudged toward the
         #    owner's preferred time of day where one applies.
         cursor = window_start
-        placed: list[ScheduledItem] = []
+        placed: list[Scheduler] = []
         for task in selected:
             start = self._start_for(task, cursor, window_start)
             end = start + task.duration_minutes
@@ -237,7 +237,7 @@ class Plan:
                 )
                 continue
 
-            placed.append(ScheduledItem(task, to_hhmm(start), to_hhmm(end)))
+            placed.append(Scheduler(task, to_hhmm(start), to_hhmm(end)))
             cursor = max(cursor, end)
             reasons.append(self._reason_for(task, start, end))
 

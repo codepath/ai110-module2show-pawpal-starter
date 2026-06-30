@@ -38,14 +38,14 @@ classDiagram
         +Pet pet
         +Constraints constraints
         +str date
-        +list~ScheduledItem~ scheduled
+        +list~Scheduler~ scheduled
         +list~Responsibility~ skipped
         +Explanation explanation
         +build() void
         +total_minutes() int
         +as_rows() list
     }
-    class ScheduledItem {
+    class Scheduler {
         +Responsibility responsibility
         +str start_time
         +str end_time
@@ -63,6 +63,6 @@ classDiagram
     Plan --> Owner : built for
     Plan --> Pet : built for
     Plan --> Constraints : uses
-    Plan "1" --> "*" ScheduledItem : produces
-    ScheduledItem --> Responsibility : for
+    Plan "1" --> "*" Scheduler : produces
+    Scheduler --> Responsibility : for
     Plan "1" --> "1" Explanation : explained by
