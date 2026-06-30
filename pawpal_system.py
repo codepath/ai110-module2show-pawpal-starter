@@ -1,7 +1,8 @@
-"""PawPal+ object model (skeleton).
+"""PawPal+ object model.
 
-Mirrors diagrams/uml_draft.mmd. Attributes are fully defined; methods are
-stubs (``raise NotImplementedError``) to be implemented in a later step.
+Mirrors diagrams/uml_draft.mmd. The scheduling logic lives in :meth:`Plan.build`,
+which reads the pet's responsibilities and the owner's preferences and produces a
+time-ordered schedule plus a human-readable explanation.
 """
 
 from __future__ import annotations
@@ -9,16 +10,26 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 
+# Numeric weight per priority label; used for sorting tasks.
+_PRIORITY_WEIGHTS = {"high": 3, "medium": 2, "low": 1}
+
+# Earliest preferred clock time (minutes since midnight) for a part of day.
+# Used to honor owner preferences such as {"walk_time": "afternoon"}.
+_TIME_OF_DAY_START = {"morning": 7 * 60, "afternoon": 12 * 60, "evening": 17 * 60}
+
+
 def to_minutes(hhmm: str) -> int:
     """Convert a ``"HH:MM"`` clock string to minutes since midnight (e.g.
     ``"08:30"`` -> ``510``)."""
-    raise NotImplementedError
+    hours, minutes = hhmm.split(":")
+    return int(hours) * 60 + int(minutes)
 
 
 def to_hhmm(minutes: int) -> str:
     """Convert minutes since midnight back to a ``"HH:MM"`` string (e.g.
     ``510`` -> ``"08:30"``)."""
-    raise NotImplementedError
+    hours, mins = divmod(int(minutes), 60)
+    return f"{hours:02d}:{mins:02d}"
 
 
 @dataclass
@@ -43,7 +54,8 @@ class Owner:
 
     def add_pet(self, pet: Pet) -> None:
         """Register a pet with this owner."""
-        raise NotImplementedError
+        if pet not in self.pets:
+            self.pets.append(pet)
 
 
 @dataclass
@@ -61,7 +73,7 @@ class Responsibility:
 
     def priority_weight(self) -> int:
         """Numeric weight for sorting (high=3, medium=2, low=1)."""
-        raise NotImplementedError
+        return _PRIORITY_WEIGHTS.get(self.priority, 2)
 
 
 @dataclass
@@ -81,11 +93,11 @@ class Constraints:
 
     def has_time_for(self, remaining_minutes: int, duration: int) -> bool:
         """Whether ``duration`` still fits within the remaining budget."""
-        raise NotImplementedError
+        return duration <= remaining_minutes
 
     def window_minutes(self) -> int:
         """Length of the clock window (``day_end`` - ``day_start``) in minutes."""
-        raise NotImplementedError
+        return to_minutes(self.day_end) - to_minutes(self.day_start)
 
 
 @dataclass
@@ -99,7 +111,21 @@ class Explanation:
 
     def as_text(self) -> str:
         """Render the explanation as markdown for the UI."""
-        raise NotImplementedError
+        lines: list[str] = []
+        if self.summary:
+            lines.append(f"**{self.summary}**")
+        if self.strategy:
+            lines.append("")
+            lines.append(self.strategy)
+        if self.reasons:
+            lines.append("")
+            lines.append("**Why these tasks:**")
+            lines.extend(f"- {reason}" for reason in self.reasons)
+        if self.skipped_reasons:
+            lines.append("")
+            lines.append("**What was skipped:**")
+            lines.extend(f"- {reason}" for reason in self.skipped_reasons)
+        return "\n".join(lines)
 
 
 @dataclass
@@ -136,12 +162,128 @@ class Plan:
         ``self.owner.preferences``. Essential responsibilities are scheduled
         first and are never dropped, even if doing so exceeds the budget;
         non-essential tasks are filled in by priority while time remains."""
-        raise NotImplementedError
+        # Reset results so build() is idempotent.
+        self.scheduled = []
+        self.skipped = []
+        reasons: list[str] = []
+        skipped_reasons: list[str] = []
+
+        window_start = to_minutes(self.constraints.day_start)
+        window_end = to_minutes(self.constraints.day_end)
+
+        # 1. Keep only tasks that run today (daily, or weekly on this weekday).
+        eligible: list[Responsibility] = []
+        for task in self.pet.responsibilities:
+            if task.recurrence == "weekly" and task.weekday != self.constraints.day_of_week:
+                self.skipped.append(task)
+                skipped_reasons.append(
+                    f"{task.title}: weekly task runs on {task.weekday}, "
+                    f"not {self.constraints.day_of_week}."
+                )
+                continue
+            eligible.append(task)
+
+        # 2. Order non-essential tasks by priority (high first), shorter first to
+        #    fit more in. Essential tasks are handled separately and always kept.
+        essential = [t for t in eligible if t.essential]
+        optional = sorted(
+            (t for t in eligible if not t.essential),
+            key=lambda t: (-t.priority_weight(), t.duration_minutes),
+        )
+
+        # 3. Select tasks against the time budget. Essentials are forced in even
+        #    if they push the total over the budget; optionals fill what's left.
+        remaining = self.constraints.available_minutes
+        selected: list[Responsibility] = []
+        for task in essential:
+            selected.append(task)
+            remaining -= task.duration_minutes
+        for task in optional:
+            if self.constraints.has_time_for(remaining, task.duration_minutes):
+                selected.append(task)
+                remaining -= task.duration_minutes
+            else:
+                self.skipped.append(task)
+                skipped_reasons.append(
+                    f"{task.title}: not enough time left in the {self.constraints.available_minutes}-min "
+                    f"budget ({task.duration_minutes} min needed, {max(remaining, 0)} min free)."
+                )
+
+        # 4. Place selected tasks on the clock. Fixed-time tasks pin to their
+        #    slot; flexible tasks flow from a moving cursor, nudged toward the
+        #    owner's preferred time of day where one applies.
+        cursor = window_start
+        placed: list[ScheduledItem] = []
+        for task in selected:
+            start = self._start_for(task, cursor, window_start)
+            end = start + task.duration_minutes
+
+            # Tasks that spill past the end of the day are dropped unless they
+            # are essential (those run regardless, late if need be).
+            if end > window_end and not task.essential:
+                self.skipped.append(task)
+                skipped_reasons.append(
+                    f"{task.title}: would end at {to_hhmm(end)}, past the "
+                    f"{self.constraints.day_end} cut-off."
+                )
+                continue
+
+            placed.append(ScheduledItem(task, to_hhmm(start), to_hhmm(end)))
+            cursor = max(cursor, end)
+            reasons.append(self._reason_for(task, start, end))
+
+        # 5. Present the schedule in clock order.
+        placed.sort(key=lambda item: to_minutes(item.start_time))
+        self.scheduled = placed
+
+        # 6. Summarize the run for the UI.
+        total_tasks = len(self.scheduled) + len(self.skipped)
+        self.explanation = Explanation(
+            summary=(
+                f"Planned {len(self.scheduled)} of {total_tasks} tasks "
+                f"({self.total_minutes()} min of care) for {self.pet.name}."
+            ),
+            strategy=(
+                "Essential tasks (feeding, meds) are scheduled first and never "
+                "dropped. Remaining tasks are added by priority while the "
+                f"{self.constraints.available_minutes}-min budget and "
+                f"{self.constraints.day_start}-{self.constraints.day_end} window allow."
+            ),
+            reasons=reasons,
+            skipped_reasons=skipped_reasons,
+        )
+
+    def _start_for(self, task: Responsibility, cursor: int, window_start: int) -> int:
+        """Pick a start time (minutes) for ``task`` given the current cursor."""
+        if task.fixed_time is not None:
+            return to_minutes(task.fixed_time)
+
+        # Honor an owner preference like {"walk_time": "afternoon"} by not
+        # starting a matching task before its preferred part of the day.
+        preferred = self.owner.preferences.get(f"{task.category}_time")
+        earliest = _TIME_OF_DAY_START.get(preferred, window_start) if preferred else window_start
+        return max(cursor, earliest)
+
+    def _reason_for(self, task: Responsibility, start: int, end: int) -> str:
+        """One-line justification for placing ``task`` at the given slot."""
+        why = "essential" if task.essential else f"{task.priority} priority"
+        slot = f"{to_hhmm(start)}-{to_hhmm(end)}"
+        return f"{task.title} ({task.category}, {why}) scheduled {slot}."
 
     def total_minutes(self) -> int:
         """Total minutes of scheduled work."""
-        raise NotImplementedError
+        return sum(item.responsibility.duration_minutes for item in self.scheduled)
 
     def as_rows(self) -> list[dict]:
         """Schedule as table rows for the Streamlit display (reads ``scheduled``)."""
-        raise NotImplementedError
+        return [
+            {
+                "Start": item.start_time,
+                "End": item.end_time,
+                "Task": item.responsibility.title,
+                "Category": item.responsibility.category,
+                "Priority": item.responsibility.priority,
+                "Minutes": item.responsibility.duration_minutes,
+            }
+            for item in self.scheduled
+        ]
