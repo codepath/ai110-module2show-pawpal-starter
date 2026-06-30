@@ -42,6 +42,10 @@ class Pet:
     notes: str = ""
     responsibilities: list[Responsibility] = field(default_factory=list)
 
+    def add_responsibility(self, task: Responsibility) -> None:
+        """Add a care task to this pet."""
+        self.responsibilities.append(task)
+
 
 @dataclass
 class Owner:
@@ -70,10 +74,15 @@ class Responsibility:
     weekday: str | None = None  # for weekly tasks: the day they run, e.g. "Monday"
     fixed_time: str | None = None  # e.g. "08:00" for meds pinned to a time
     essential: bool = False  # meds/feeding that must never be dropped
+    completed: bool = False  # whether the owner has finished this task today
 
     def priority_weight(self) -> int:
         """Numeric weight for sorting (high=3, medium=2, low=1)."""
         return _PRIORITY_WEIGHTS.get(self.priority, 2)
+
+    def mark_complete(self) -> None:
+        """Mark this task as done for the day."""
+        self.completed = True
 
 
 @dataclass
