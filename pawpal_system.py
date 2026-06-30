@@ -181,8 +181,12 @@ class Plan:
         window_end = to_minutes(self.constraints.day_end)
 
         # 1. Keep only tasks that run today (daily, or weekly on this weekday).
+        #    Tasks already finished today are done with: they neither take a slot
+        #    nor consume the budget.
         eligible: list[Responsibility] = []
         for task in self.pet.responsibilities:
+            if task.completed:
+                continue
             if task.recurrence == "weekly" and task.weekday != self.constraints.day_of_week:
                 self.skipped.append(task)
                 skipped_reasons.append(
@@ -218,14 +222,55 @@ class Plan:
                     f"budget ({task.duration_minutes} min needed, {max(remaining, 0)} min free)."
                 )
 
-        # 4. Place selected tasks on the clock. Fixed-time tasks pin to their
-        #    slot; flexible tasks flow from a moving cursor, nudged toward the
-        #    owner's preferred time of day where one applies.
-        cursor = window_start
+        # 4. Place selected tasks on the clock in two passes so flexible work can
+        #    flow *around* the fixed appointments instead of colliding with them.
         placed: list[Scheduler] = []
-        for task in selected:
-            start = self._start_for(task, cursor, window_start)
+        occupied: list[tuple[int, int]] = []  # (start, end) of placed tasks
+
+        # 4a. Pin fixed-time tasks first. Drop a non-essential one that falls
+        #     outside the day window or overlaps an already-pinned slot; essential
+        #     fixed tasks (meds/feeding) are kept regardless.
+        fixed = sorted(
+            (t for t in selected if t.fixed_time is not None),
+            key=lambda t: to_minutes(t.fixed_time),
+        )
+        for task in fixed:
+            start = to_minutes(task.fixed_time)
             end = start + task.duration_minutes
+            if not task.essential and (start < window_start or end > window_end):
+                self.skipped.append(task)
+                skipped_reasons.append(
+                    f"{task.title}: fixed at {task.fixed_time}, outside the "
+                    f"{self.constraints.day_start}-{self.constraints.day_end} window."
+                )
+                continue
+            if not task.essential and self._overlaps(start, end, occupied):
+                self.skipped.append(task)
+                skipped_reasons.append(
+                    f"{task.title}: its fixed {task.fixed_time} slot overlaps another task."
+                )
+                continue
+            placed.append(Scheduler(task, to_hhmm(start), to_hhmm(end)))
+            occupied.append((start, end))
+            reasons.append(self._reason_for(task, start, end))
+
+        occupied.sort()
+
+        # 4b. Flow flexible tasks from a moving cursor, sliding each past any
+        #     pinned slot it would run into, nudged toward the owner's preferred
+        #     time of day where one applies.
+        cursor = window_start
+        flexible = sorted(
+            (t for t in selected if t.fixed_time is None),
+            key=lambda t: self._earliest_start(t, window_start),
+        )
+        for task in flexible:
+            start = max(cursor, self._earliest_start(task, window_start))
+            end = start + task.duration_minutes
+            for slot_start, slot_end in occupied:  # occupied is sorted by start
+                if start < slot_end and slot_start < end:
+                    start = slot_end
+                    end = start + task.duration_minutes
 
             # Tasks that spill past the end of the day are dropped unless they
             # are essential (those run regardless, late if need be).
@@ -238,7 +283,7 @@ class Plan:
                 continue
 
             placed.append(Scheduler(task, to_hhmm(start), to_hhmm(end)))
-            cursor = max(cursor, end)
+            cursor = end
             reasons.append(self._reason_for(task, start, end))
 
         # 5. Present the schedule in clock order.
@@ -262,16 +307,18 @@ class Plan:
             skipped_reasons=skipped_reasons,
         )
 
-    def _start_for(self, task: Responsibility, cursor: int, window_start: int) -> int:
-        """Pick a start time (minutes) for ``task`` given the current cursor."""
-        if task.fixed_time is not None:
-            return to_minutes(task.fixed_time)
+    @staticmethod
+    def _overlaps(start: int, end: int, intervals: list[tuple[int, int]]) -> bool:
+        """Whether ``[start, end)`` overlaps any of the given intervals."""
+        return any(start < slot_end and slot_start < end for slot_start, slot_end in intervals)
 
-        # Honor an owner preference like {"walk_time": "afternoon"} by not
-        # starting a matching task before its preferred part of the day.
+    def _earliest_start(self, task: Responsibility, window_start: int) -> int:
+        """Earliest minute a flexible ``task`` may start, ignoring the cursor.
+
+        Honors an owner preference like ``{"walk_time": "afternoon"}`` by not
+        starting a matching task before its preferred part of the day."""
         preferred = self.owner.preferences.get(f"{task.category}_time")
-        earliest = _TIME_OF_DAY_START.get(preferred, window_start) if preferred else window_start
-        return max(cursor, earliest)
+        return _TIME_OF_DAY_START.get(preferred, window_start) if preferred else window_start
 
     def _reason_for(self, task: Responsibility, start: int, end: int) -> str:
         """One-line justification for placing ``task`` at the given slot."""
