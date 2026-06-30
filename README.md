@@ -78,9 +78,16 @@ pytest --cov
 
 Sample test output:
 
+```bash
+
+tests\test_pawpal.py ..                                                       [100%]
+
+================================ 2 passed in 0.05s =================================
+
 ```
-# Paste your pytest output here
-```
+
+## Tradeoffs
+One tradeoff is that in detect_conflicts() function, is we use a nested loop to go through items in each section, so it is O(n^2) instead of O(n). So I traded a slower space complexity in order for simpler and easier-to-understand code.
 
 ## 📐 Smarter Scheduling
 
@@ -88,10 +95,12 @@ Sample test output:
 
 | Feature | Method(s) | Notes |
 |---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+| Task sorting | sort_by_time() | sorts item by time  |
+| Filtering | filter_tasks() | filter tasks by completion status or by pet |
+| Conflict handling | detect_conflicts() | checks the schedule and detects overlapping time conflcits |
+| Recurring tasks | next_occurrence | it spawns a new task after the one is completed |
+
+
 
 ## 📸 Demo Walkthrough
 

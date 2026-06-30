@@ -395,16 +395,23 @@ class Plan:
         non-fatal: it surfaces problems (e.g. two essential tasks pinned to the
         same time, which ``build`` keeps regardless) as a warning rather than
         raising, so callers can show it and carry on."""
+        # Work in clock order, then compare every slot against each earlier one.
+        # Checking all earlier slots (not just the immediate neighbor) catches a
+        # long task that overlaps a later one with a short task nested between.
         ordered = Scheduler.sort_by_time(self.scheduled)
         overlaps: list[str] = []
-        for earlier, later in zip(ordered, ordered[1:]):
-            if later.start_minutes() < to_minutes(earlier.end_time):
-                overlaps.append(
-                    f"'{earlier.responsibility.title}' "
-                    f"({earlier.start_time}-{earlier.end_time}) overlaps "
-                    f"'{later.responsibility.title}' "
-                    f"({later.start_time}-{later.end_time})"
-                )
+        for i in range(len(ordered)):
+            later = ordered[i]
+            for j in range(i):
+                earlier = ordered[j]
+                # They overlap when the later task starts before the earlier ends.
+                if later.start_minutes() < to_minutes(earlier.end_time):
+                    overlaps.append(
+                        f"'{earlier.responsibility.title}' "
+                        f"({earlier.start_time}-{earlier.end_time}) overlaps "
+                        f"'{later.responsibility.title}' "
+                        f"({later.start_time}-{later.end_time})"
+                    )
         if not overlaps:
             return ""
         return "Warning - schedule conflict: " + "; ".join(overlaps) + "."
