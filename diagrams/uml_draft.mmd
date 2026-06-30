@@ -4,6 +4,7 @@ classDiagram
     class Owner {
         +str name
         +list~Pet~ pets
+        +dict preferences
         +add_pet(pet) void
     }
     class Pet {
@@ -11,6 +12,7 @@ classDiagram
         +str species
         +str energy_level
         +str notes
+        +list~Responsibility~ responsibilities
     }
     class Responsibility {
         +str title
@@ -18,6 +20,7 @@ classDiagram
         +str priority
         +str category
         +str recurrence
+        +str weekday
         +str fixed_time
         +bool essential
         +priority_weight() int
@@ -27,20 +30,25 @@ classDiagram
         +str day_start
         +str day_end
         +str day_of_week
-        +dict preferences
         +has_time_for(remaining, duration) bool
+        +window_minutes() int
     }
     class Plan {
+        +Owner owner
         +Pet pet
-        +list~Responsibility~ responsibilities
         +Constraints constraints
         +str date
-        +list~dict~ scheduled
+        +list~ScheduledItem~ scheduled
         +list~Responsibility~ skipped
         +Explanation explanation
         +build() void
         +total_minutes() int
         +as_rows() list
+    }
+    class ScheduledItem {
+        +Responsibility responsibility
+        +str start_time
+        +str end_time
     }
     class Explanation {
         +str summary
@@ -50,10 +58,11 @@ classDiagram
         +as_text() str
     }
 
-    %% scheduled: list of dicts, each {responsibility, start_time, end_time}
     Owner "1" --> "*" Pet : owns
     Pet "1" --> "*" Responsibility : has
+    Plan --> Owner : built for
     Plan --> Pet : built for
-    Plan --> Responsibility : schedules
     Plan --> Constraints : uses
+    Plan "1" --> "*" ScheduledItem : produces
+    ScheduledItem --> Responsibility : for
     Plan "1" --> "1" Explanation : explained by
