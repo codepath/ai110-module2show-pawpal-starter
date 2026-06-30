@@ -68,23 +68,27 @@ Mittens (cat)
 ```
 ## 🧪 Testing PawPal+
 
-```bash
-# Run the full test suite:
-pytest
+These tests focus on the happy path and ensuring that edge cases are handled. It is focusing that sorting, filtering, and recurring tasks are handled correctly. For example, it tests for a daily task to be added for the next day if it is marked completed. Furthermore, it tests to ensure the user is notified if a duplicate tasks is found. 
 
-# Run with coverage:
-pytest --cov
-```
-
-Sample test output:
+### Sample test output:
 
 ```bash
 
-tests\test_pawpal.py ..                                                       [100%]
+$ python -m pytest
+=============================== test session starts ===============================
+platform win32 -- Python 3.13.14, pytest-9.0.3, pluggy-1.6.0
+rootdir: C:\Users\varve\python\codepath\ai110\module-2\week-2\pawpal
+plugins: anyio-4.13.0
+collected 50 items                                                                 
 
-================================ 2 passed in 0.05s =================================
+tests\test_pawpal.py ..................................................      [100%]
+
+=============================== 50 passed in 0.08s ================================
 
 ```
+
+### Confidence levels
+Based on the tests, my confidence level is a 5. The tests thoroughly cover edge cases that will cause the site to crash, and ensures graceful handling for duplicates.
 
 ## Tradeoffs
 One tradeoff is that in detect_conflicts() function, is we use a nested loop to go through items in each section, so it is O(n^2) instead of O(n). So I traded a slower space complexity in order for simpler and easier-to-understand code.
