@@ -61,6 +61,29 @@ class Owner:
         if pet not in self.pets:
             self.pets.append(pet)
 
+    def filter_tasks(
+        self,
+        *,
+        completed: bool | None = None,
+        pet_name: str | None = None,
+    ) -> list[Responsibility]:
+        """Return this owner's tasks, optionally filtered.
+
+        Pass ``completed=True``/``False`` to keep only finished/unfinished tasks,
+        and/or ``pet_name`` to keep only tasks belonging to that pet. Filters
+        that are left as ``None`` are not applied; with no arguments every task
+        across all pets is returned.
+        """
+        tasks: list[Responsibility] = []
+        for pet in self.pets:
+            if pet_name is not None and pet.name != pet_name:
+                continue
+            for task in pet.responsibilities:
+                if completed is not None and task.completed != completed:
+                    continue
+                tasks.append(task)
+        return tasks
+
 
 @dataclass
 class Responsibility:
