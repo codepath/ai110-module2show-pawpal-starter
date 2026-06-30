@@ -26,7 +26,9 @@ def main() -> None:
 
     # 3. Add tasks (Responsibilities) to the pets, deliberately *out of time
     #    order* so we can verify the sorting methods reorder them correctly.
-    rex.responsibilities = [
+    #    Register via add_responsibility so each task is linked back to its pet
+    #    (needed for recurring tasks to auto-enqueue their next occurrence).
+    for task in [
         Responsibility(
             title="Evening walk",
             duration_minutes=30,
@@ -49,9 +51,20 @@ def main() -> None:
             fixed_time="08:30",
             essential=True,
         ),
-    ]
+        # Pinned to the same time as Breakfast. Both are essential, so build()
+        # keeps both and detect_conflicts() should warn about the overlap.
+        Responsibility(
+            title="Insulin shot",
+            duration_minutes=10,
+            priority="high",
+            category="meds",
+            fixed_time="08:30",
+            essential=True,
+        ),
+    ]:
+        rex.add_responsibility(task)
 
-    mittens.responsibilities = [
+    for task in [
         Responsibility(
             title="Play time",
             duration_minutes=20,
@@ -74,7 +87,8 @@ def main() -> None:
             category="grooming",
             fixed_time="12:00",
         ),
-    ]
+    ]:
+        mittens.add_responsibility(task)
 
     # 4. Build and print today's schedule for each pet.
     constraints = Constraints(available_minutes=240, day_of_week="Monday")
@@ -97,6 +111,11 @@ def main() -> None:
             )
         print(f"  Total: {plan.total_minutes()} min of care")
 
+        # Surface any overlapping slots as a warning (never crashes).
+        conflict = plan.detect_conflicts()
+        if conflict:
+            print(f"  {conflict}")
+
     # 5. Verify Scheduler.sort_by_time(): tasks were added out of order above,
     #    so feeding raw (unsorted) Scheduler items should print scrambled, and
     #    sort_by_time() should put them back into clock order.
@@ -116,14 +135,28 @@ def main() -> None:
     for item in Scheduler.sort_by_time(unsorted):
         print(f"  {item.start_time}  {item.responsibility.title}")
 
-    # 6. Verify Owner.filter_tasks(): mark a couple of tasks complete, then
-    #    filter by completion status and by pet name.
+    # 6. Verify auto-recurrence: completing a daily/weekly task should append a
+    #    fresh, uncompleted copy to the same pet for its next occurrence.
+    print("\n" + "=" * 50)
+    print("Verify recurrence: mark_complete() spawns next occurrence")
+    print("=" * 50)
+
+    morning_walk = rex.responsibilities[1]  # daily task
+    print(f"\nRex has {len(rex.responsibilities)} tasks before completing "
+          f"'{morning_walk.title}'.")
+    morning_walk.mark_complete()
+    mittens.responsibilities[1].mark_complete()  # Morning feeding (daily)
+    print(f"Rex has {len(rex.responsibilities)} tasks after completing it "
+          f"(next occurrence auto-added):")
+    for task in rex.responsibilities:
+        flag = "done" if task.completed else "todo"
+        print(f"  [{flag}] {task.title}")
+
+    # 7. Verify Owner.filter_tasks(): with some tasks now completed (and their
+    #    next occurrences pending), filter by completion status and by pet name.
     print("\n" + "=" * 50)
     print("Verify filtering: Owner.filter_tasks()")
     print("=" * 50)
-
-    rex.responsibilities[1].mark_complete()  # Morning walk
-    mittens.responsibilities[1].mark_complete()  # Morning feeding
 
     def show(label: str, tasks: list[Responsibility]) -> None:
         print(f"\n{label} ({len(tasks)}):")

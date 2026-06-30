@@ -7,7 +7,7 @@ time-ordered schedule plus a human-readable explanation.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 
 # Numeric weight per priority label; used for sorting tasks.
@@ -43,7 +43,12 @@ class Pet:
     responsibilities: list[Responsibility] = field(default_factory=list)
 
     def add_responsibility(self, task: Responsibility) -> None:
-        """Add a care task to this pet."""
+        """Add a care task to this pet.
+
+        Links the task back to this pet so completing a recurring task can
+        enqueue its next occurrence automatically (see
+        :meth:`Responsibility.mark_complete`)."""
+        task.pet = self
         self.responsibilities.append(task)
 
 
@@ -98,14 +103,34 @@ class Responsibility:
     fixed_time: str | None = None  # e.g. "08:00" for meds pinned to a time
     essential: bool = False  # meds/feeding that must never be dropped
     completed: bool = False  # whether the owner has finished this task today
+    # Back-reference to the owning pet, set by Pet.add_responsibility. Excluded
+    # from repr/eq to avoid an infinite Pet<->Responsibility reference cycle.
+    pet: Pet | None = field(default=None, repr=False, compare=False)
 
     def priority_weight(self) -> int:
         """Numeric weight for sorting (high=3, medium=2, low=1)."""
         return _PRIORITY_WEIGHTS.get(self.priority, 2)
 
+    def next_occurrence(self) -> Responsibility:
+        """A fresh, uncompleted copy of this task for its next scheduled day.
+
+        The model carries no concrete date on a task (dates live on ``Plan``),
+        so the next occurrence is simply this task reset to not-completed; its
+        ``recurrence``/``weekday`` already say when it next runs."""
+        return replace(self, completed=False)
+
     def mark_complete(self) -> None:
-        """Mark this task as done for the day."""
+        """Mark this task as done for the day.
+
+        For recurring tasks (``daily``/``weekly``), automatically enqueue the
+        next occurrence on the same pet so the work reappears once today's is
+        finished. No-op if already completed, so calling twice won't spawn
+        duplicates."""
+        if self.completed:
+            return
         self.completed = True
+        if self.recurrence in ("daily", "weekly") and self.pet is not None:
+            self.pet.add_responsibility(self.next_occurrence())
 
 
 @dataclass
@@ -361,6 +386,28 @@ class Plan:
     def total_minutes(self) -> int:
         """Total minutes of scheduled work."""
         return sum(item.responsibility.duration_minutes for item in self.scheduled)
+
+    def detect_conflicts(self) -> str:
+        """Check the schedule for overlapping time slots.
+
+        Returns a human-readable warning message listing any overlaps, or an
+        empty string when the schedule is clean. This is intentionally
+        non-fatal: it surfaces problems (e.g. two essential tasks pinned to the
+        same time, which ``build`` keeps regardless) as a warning rather than
+        raising, so callers can show it and carry on."""
+        ordered = Scheduler.sort_by_time(self.scheduled)
+        overlaps: list[str] = []
+        for earlier, later in zip(ordered, ordered[1:]):
+            if later.start_minutes() < to_minutes(earlier.end_time):
+                overlaps.append(
+                    f"'{earlier.responsibility.title}' "
+                    f"({earlier.start_time}-{earlier.end_time}) overlaps "
+                    f"'{later.responsibility.title}' "
+                    f"({later.start_time}-{later.end_time})"
+                )
+        if not overlaps:
+            return ""
+        return "Warning - schedule conflict: " + "; ".join(overlaps) + "."
 
     def as_rows(self) -> list[dict]:
         """Schedule as table rows for the Streamlit display (reads ``scheduled``)."""
