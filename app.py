@@ -1,3 +1,5 @@
+from datetime import time
+
 import streamlit as st
 
 from pawpal_system import (
@@ -7,7 +9,7 @@ from pawpal_system import (
     Constraints,
     Plan,
     Scheduler,
-    Explanation,
+    to_minutes,
 )
 
 st.set_page_config(page_title="PawPal+", page_icon="🐾", layout="centered")
@@ -16,103 +18,275 @@ st.title("🐾 PawPal+")
 
 st.markdown(
     """
-Welcome to the PawPal+ starter app.
-
-This file is intentionally thin. It gives you a working Streamlit app so you can start quickly,
-but **it does not implement the project logic**. Your job is to design the system and build it.
-
-Use this app as your interactive demo once your backend classes/functions exist.
+**PawPal+** is a pet care planning assistant. Add your pets and their care tasks,
+set your daily constraints, and PawPal+ builds an explained, time-ordered schedule —
+placing essential tasks first, honoring fixed times and your preferences, and warning
+about any conflicts.
 """
 )
 
-with st.expander("Scenario", expanded=True):
+WEEKDAYS = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+]
+CATEGORIES = ["walk", "feeding", "meds", "enrichment", "grooming", "general"]
+# Categories a time-of-day preference makes sense for (flexible, non-pinned work).
+PREFERENCE_CATEGORIES = ["walk", "feeding", "enrichment", "grooming"]
+TIME_OF_DAY = ["No preference", "morning", "afternoon", "evening"]
+
+with st.expander("Scenario", expanded=False):
     st.markdown(
         """
-**PawPal+** is a pet care planning assistant. It helps a pet owner plan care tasks
-for their pet(s) based on constraints like time, priority, and preferences.
-
-You will design and implement the scheduling logic and connect it to this Streamlit UI.
+PawPal+ helps a pet owner plan care tasks for their pet(s) based on constraints like
+time budget, priority, fixed appointments, and preferences. Essential tasks (feeding,
+meds) are scheduled first and never dropped; the rest are filled in by priority while
+the day's budget and window allow.
 """
     )
 
-with st.expander("What you need to build", expanded=True):
-    st.markdown(
-        """
-At minimum, your system should:
-- Represent pet care tasks (what needs to happen, how long it takes, priority)
-- Represent the pet and the owner (basic info and preferences)
-- Build a plan/schedule for a day that chooses and orders tasks based on constraints
-- Explain the plan (why each task was chosen and when it happens)
-"""
-    )
-
-st.divider()
-
-st.subheader("Quick Demo Inputs (UI only)")
-owner_name = st.text_input("Owner name", value="Jordan")
-pet_name = st.text_input("Pet name", value="Mochi")
-species = st.selectbox("Species", ["dog", "cat", "other"])
-
-st.markdown("### Tasks")
-st.caption("Add a few tasks. In your final version, these should feed into your scheduler.")
-
+# --------------------------------------------------------------------------- #
+# Session state: a single Owner persists across reruns; pets and their tasks
+# live on that owner, so every widget below reads/writes the same object graph.
+# --------------------------------------------------------------------------- #
 if "owner" not in st.session_state:
-    st.session_state.owner = Owner(name=owner_name)
-
-# Adding a Pet: create the pet and register it with the owner.
-if "pet" not in st.session_state:
-    pet = Pet(name=pet_name, species=species)
-    st.session_state.owner.add_pet(pet)
-    st.session_state.pet = pet
-
+    st.session_state.owner = Owner(name="Jordan")
 owner = st.session_state.owner
-pet = st.session_state.pet
-
-col1, col2, col3 = st.columns(3)
-with col1:
-    task_title = st.text_input("Task title", value="Morning walk")
-with col2:
-    duration = st.number_input("Duration (minutes)", min_value=1, max_value=240, value=20)
-with col3:
-    priority = st.selectbox("Priority", ["low", "medium", "high"], index=2)
-
-# Scheduling a Task: create a Responsibility and attach it to the pet.
-if st.button("Add task"):
-    pet.add_responsibility(
-        Responsibility(
-            title=task_title,
-            duration_minutes=int(duration),
-            priority=priority,
-        )
-    )
-
-if pet.responsibilities:
-    st.write("Current tasks:")
-    st.table(
-        [
-            {
-                "Task": task.title,
-                "Minutes": task.duration_minutes,
-                "Priority": task.priority,
-            }
-            for task in pet.responsibilities
-        ]
-    )
-else:
-    st.info("No tasks yet. Add one above.")
 
 st.divider()
 
-st.subheader("Build Schedule")
-st.caption("This button should call your scheduling logic once you implement it.")
+# --------------------------------------------------------------------------- #
+# Owner + preferences
+# --------------------------------------------------------------------------- #
+st.subheader("Owner")
+owner.name = st.text_input("Owner name", value=owner.name)
+
+with st.expander("Preferences (preferred time of day per activity)"):
+    st.caption(
+        "Nudges *flexible* (non-fixed) tasks of a category so they aren't placed "
+        "before their preferred part of the day. Fixed-time tasks ignore this."
+    )
+    for category in PREFERENCE_CATEGORIES:
+        key = f"{category}_time"
+        current = owner.preferences.get(key, "No preference")
+        choice = st.selectbox(
+            f"{category.capitalize()} time",
+            TIME_OF_DAY,
+            index=TIME_OF_DAY.index(current) if current in TIME_OF_DAY else 0,
+            key=f"pref_{category}",
+        )
+        if choice == "No preference":
+            owner.preferences.pop(key, None)
+        else:
+            owner.preferences[key] = choice
+
+st.divider()
+
+# --------------------------------------------------------------------------- #
+# Pets — support multiple so filtering by pet is meaningful.
+# --------------------------------------------------------------------------- #
+st.subheader("Pets")
+with st.form("add_pet", clear_on_submit=True):
+    pc1, pc2, pc3 = st.columns(3)
+    with pc1:
+        new_pet_name = st.text_input("Name", value="Mochi")
+    with pc2:
+        new_species = st.selectbox("Species", ["dog", "cat", "other"])
+    with pc3:
+        new_energy = st.selectbox("Energy level", ["low", "medium", "high"], index=1)
+    if st.form_submit_button("Add pet"):
+        name = new_pet_name.strip()
+        if not name:
+            st.warning("Please enter a pet name.")
+        elif any(pet.name.lower() == name.lower() for pet in owner.pets):
+            st.warning(f"A pet named '{name}' already exists — not added.")
+        else:
+            owner.add_pet(Pet(name=name, species=new_species, energy_level=new_energy))
+            st.success(f"Added {name}.")
+
+if not owner.pets:
+    st.info("Add a pet above to get started.")
+    st.stop()
+
+pet_names = [pet.name for pet in owner.pets]
+st.caption("Pets: " + ", ".join(f"{p.name} ({p.species})" for p in owner.pets))
+
+st.divider()
+
+# --------------------------------------------------------------------------- #
+# Tasks — full Responsibility form (category, recurrence, weekday, fixed time,
+# essential), attached to the chosen pet via add_responsibility.
+# --------------------------------------------------------------------------- #
+st.subheader("Tasks")
+active_pet_name = st.selectbox("Add tasks to", pet_names, key="task_pet")
+active_pet = next(pet for pet in owner.pets if pet.name == active_pet_name)
+
+with st.form("add_task", clear_on_submit=True):
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        t_title = st.text_input("Task title", value="Morning walk")
+    with c2:
+        t_duration = st.number_input("Duration (minutes)", min_value=1, max_value=240, value=20)
+    with c3:
+        t_priority = st.selectbox("Priority", ["low", "medium", "high"], index=2)
+
+    c4, c5, c6 = st.columns(3)
+    with c4:
+        t_category = st.selectbox("Category", CATEGORIES)
+    with c5:
+        t_recurrence = st.selectbox("Recurrence", ["daily", "weekly", "once"])
+    with c6:
+        t_weekday = st.selectbox("Weekday (weekly only)", WEEKDAYS)
+
+    c7, c8, c9 = st.columns(3)
+    with c7:
+        t_essential = st.checkbox("Essential (never dropped)")
+    with c8:
+        t_pin = st.checkbox("Pin to a fixed time")
+    with c9:
+        t_fixed = st.time_input("Fixed time", value=time(8, 0))
+
+    if st.form_submit_button("Add task"):
+        title = t_title.strip()
+        if not title:
+            st.warning("Please enter a task title.")
+        else:
+            new_task = Responsibility(
+                title=title,
+                duration_minutes=int(t_duration),
+                priority=t_priority,
+                category=t_category,
+                recurrence=t_recurrence,
+                weekday=t_weekday if t_recurrence == "weekly" else None,
+                fixed_time=t_fixed.strftime("%H:%M") if t_pin else None,
+                essential=t_essential,
+            )
+            # Warn about pinned tasks whose time overlaps another pinned task on
+            # the same pet. Flexible (non-fixed) tasks flow around each other, so
+            # only fixed-time tasks can truly collide at add time.
+            clashes = []
+            if new_task.fixed_time:
+                new_start = to_minutes(new_task.fixed_time)
+                new_end = new_start + new_task.duration_minutes
+                for existing in active_pet.responsibilities:
+                    if existing.completed or not existing.fixed_time:
+                        continue
+                    ex_start = to_minutes(existing.fixed_time)
+                    ex_end = ex_start + existing.duration_minutes
+                    if new_start < ex_end and ex_start < new_end:
+                        clashes.append(existing)
+            active_pet.add_responsibility(new_task)
+            if clashes:
+                names = ", ".join(f"'{c.title}' ({c.fixed_time})" for c in clashes)
+                st.warning(
+                    f"Added '{title}', but its {new_task.fixed_time} slot overlaps {names}. "
+                    "Essentials are kept and flagged as a conflict; a non-essential task "
+                    "may be dropped when you build the schedule."
+                )
+            else:
+                st.success(f"Added '{title}'.")
+
+# --------------------------------------------------------------------------- #
+# Current tasks — filter (Owner.filter_tasks), sort, and mark complete
+# (Responsibility.mark_complete auto-enqueues the next occurrence).
+# --------------------------------------------------------------------------- #
+st.markdown("### Current tasks")
+fc1, fc2, fc3 = st.columns(3)
+with fc1:
+    filter_pet = st.selectbox("Filter by pet", ["All pets"] + pet_names)
+with fc2:
+    filter_status = st.selectbox("Filter by status", ["All", "Not completed", "Completed"])
+with fc3:
+    sort_choice = st.selectbox(
+        "Sort by",
+        ["Added order", "Priority (high → low)", "Duration (short → long)", "Title (A → Z)"],
+    )
+
+tasks = owner.filter_tasks(
+    pet_name=None if filter_pet == "All pets" else filter_pet,
+    completed=None if filter_status == "All" else (filter_status == "Completed"),
+)
+
+if sort_choice == "Priority (high → low)":
+    tasks = sorted(tasks, key=lambda t: (-t.priority_weight(), t.duration_minutes))
+elif sort_choice == "Duration (short → long)":
+    tasks = sorted(tasks, key=lambda t: t.duration_minutes)
+elif sort_choice == "Title (A → Z)":
+    tasks = sorted(tasks, key=lambda t: t.title.lower())
+
+if not tasks:
+    st.info("No tasks match the current filter.")
+else:
+    header = st.columns([3, 1, 1, 2, 2, 1])
+    for col, label in zip(header, ["Task", "Min", "Priority", "Category", "When", ""]):
+        col.markdown(f"**{label}**")
+    for task in tasks:
+        row = st.columns([3, 1, 1, 2, 2, 1])
+        status = "✅" if task.completed else "⬜"
+        essential = " ⭐" if task.essential else ""
+        row[0].write(f"{status} {task.title}{essential}")
+        row[1].write(str(task.duration_minutes))
+        row[2].write(task.priority)
+        row[3].write(task.category)
+        if task.fixed_time:
+            row[4].write(f"📌 {task.fixed_time}")
+        elif task.recurrence == "weekly":
+            row[4].write(f"{task.recurrence} · {task.weekday}")
+        else:
+            row[4].write(task.recurrence)
+        if task.completed:
+            row[5].write("done")
+        elif row[5].button("Done", key=f"done_{id(task)}"):
+            # Recurring tasks auto-enqueue a fresh copy for the next occurrence.
+            task.mark_complete()
+            st.rerun()
+
+st.divider()
+
+# --------------------------------------------------------------------------- #
+# Build schedule — Constraints (budget + window + weekday), Plan.build,
+# detect_conflicts, total_minutes, as_rows, and the explanation.
+# --------------------------------------------------------------------------- #
+st.subheader("Build schedule")
+
+sc1, sc2, sc3 = st.columns(3)
+with sc1:
+    sched_pet_name = st.selectbox("Pet to schedule", pet_names, key="sched_pet")
+with sc2:
+    budget = st.number_input("Time budget (minutes)", min_value=0, max_value=1440, value=240)
+with sc3:
+    day_of_week = st.selectbox("Day of week", WEEKDAYS)
+
+wc1, wc2 = st.columns(2)
+with wc1:
+    day_start = st.time_input("Day start", value=time(7, 0))
+with wc2:
+    day_end = st.time_input("Day end", value=time(21, 0))
+
+sched_pet = next(pet for pet in owner.pets if pet.name == sched_pet_name)
 
 if st.button("Generate schedule"):
-    constraints = Constraints(available_minutes=240)
-    plan = Plan(owner=owner, pet=pet, constraints=constraints)
+    constraints = Constraints(
+        available_minutes=int(budget),
+        day_start=day_start.strftime("%H:%M"),
+        day_end=day_end.strftime("%H:%M"),
+        day_of_week=day_of_week,
+    )
+    plan = Plan(owner=owner, pet=sched_pet, constraints=constraints)
     plan.build()
 
-    if plan.scheduled:
-        st.write(f"Schedule for {pet.name}:")
-        st.table(plan.as_rows())
-    st.markdown(plan.explanation.as_text())
+    conflict = plan.detect_conflicts()
+    if conflict:
+        st.warning(conflict)
 
+    if plan.scheduled:
+        st.write(f"Schedule for {sched_pet.name} — {plan.total_minutes()} min of care:")
+        st.table(plan.as_rows())
+    else:
+        st.info("Nothing scheduled for these constraints.")
+
+    st.markdown(plan.explanation.as_text())
