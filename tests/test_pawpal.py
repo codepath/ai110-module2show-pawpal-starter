@@ -522,8 +522,8 @@ class TestPlanOutputs:
                 "Start": "08:00",
                 "End": "08:30",
                 "Task": "Walk",
-                "Category": "walk",
-                "Priority": "high",
+                "Category": "🚶 walk",
+                "Priority": "🔴 high",
                 "Minutes": 30,
             }
         ]

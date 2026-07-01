@@ -10,6 +10,8 @@ from pawpal_system import (
     Constraints,
     Plan,
     Scheduler,
+    category_emoji,
+    priority_emoji,
     to_minutes,
 )
 
@@ -253,9 +255,9 @@ else:
                 "Status": "✅ Done" if task.completed else "⬜ To do",
                 "Task": f"{task.title}{' ⭐' if task.essential else ''}",
                 "Pet": task.pet.name if task.pet else "—",
-                "Priority": task.priority,
+                "Priority": f"{priority_emoji(task.priority)} {task.priority}",
                 "Min": task.duration_minutes,
-                "Category": task.category,
+                "Category": f"{category_emoji(task.category)} {task.category}",
                 "When": when(task),
             }
             for task in tasks

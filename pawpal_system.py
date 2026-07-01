@@ -34,6 +34,34 @@ _DURATION_PENALTY = 1
 _TIME_OF_DAY_START = {"morning": 7 * 60, "afternoon": 12 * 60, "evening": 17 * 60}
 
 
+# --------------------------------------------------------------------------- #
+# Presentation helpers — shared emoji vocabulary so the terminal demo (main.py)
+# and the Streamlit UI (app.py) label task types and priorities the same way.
+# Purely cosmetic; the scheduling logic never reads these.
+# --------------------------------------------------------------------------- #
+CATEGORY_EMOJI = {
+    "walk": "🚶",
+    "feeding": "🍽️",
+    "meds": "💊",
+    "enrichment": "🧸",
+    "grooming": "✂️",
+    "general": "📋",
+}
+
+# One emoji per priority tier, so importance reads at a glance.
+PRIORITY_EMOJI = {"high": "🔴", "medium": "🟡", "low": "🟢"}
+
+
+def category_emoji(category: str) -> str:
+    """Emoji for a task category (falls back to the ``general`` icon)."""
+    return CATEGORY_EMOJI.get(category, CATEGORY_EMOJI["general"])
+
+
+def priority_emoji(priority: str) -> str:
+    """Emoji for a priority tier (falls back to the ``medium`` icon)."""
+    return PRIORITY_EMOJI.get(priority, PRIORITY_EMOJI["medium"])
+
+
 class Priority(str, Enum):
     """The priority tiers a task can have.
 
@@ -536,8 +564,10 @@ class Plan:
                 "Start": item.start_time,
                 "End": item.end_time,
                 "Task": item.responsibility.title,
-                "Category": item.responsibility.category,
-                "Priority": item.responsibility.priority,
+                "Category": f"{category_emoji(item.responsibility.category)} "
+                f"{item.responsibility.category}",
+                "Priority": f"{priority_emoji(item.responsibility.priority)} "
+                f"{item.responsibility.priority}",
                 "Minutes": item.responsibility.duration_minutes,
             }
             for item in items

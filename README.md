@@ -186,3 +186,11 @@ After sort_by_priority():
 
 ```
 
+## Strech Goal - Challegnge 4
+
+- In pawpal_system.py file, I added icons for icons such as walking, feeding and what the pets are doing.
+- In main.py, added deal colors for different headings and section to make it appealing to the user. 
+- Inside app.py, added emojis to the table to show category and priority.
+
+
+

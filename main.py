@@ -4,6 +4,18 @@ Creates an owner with two pets, gives each pet a few care tasks at different
 times, builds today's plan for each pet, and prints the schedule to the terminal.
 """
 
+import sys
+
+from colorama import Fore, Style, init
+
+# Make sure the emojis below survive a non-UTF-8 console (Windows defaults to
+# cp1252, which can't encode them). Fall back silently if reconfigure is
+# unavailable or the stream doesn't support it.
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+except (AttributeError, OSError):
+    pass
+
 from pawpal_system import (
     Constraints,
     Owner,
@@ -11,7 +23,42 @@ from pawpal_system import (
     Plan,
     Responsibility,
     Scheduler,
+    category_emoji,
+    priority_emoji,
 )
+
+# Enable ANSI colors on every platform (notably older Windows terminals) and
+# auto-reset styling after each print so colors never bleed between lines.
+init(autoreset=True)
+
+# ANSI color per priority tier, mirroring the traffic-light emojis in
+# pawpal_system.PRIORITY_EMOJI so the text and icon agree.
+_PRIORITY_COLOR = {
+    "high": Fore.RED,
+    "medium": Fore.YELLOW,
+    "low": Fore.GREEN,
+}
+
+
+def _priority_colored(priority: str) -> str:
+    """The priority label wrapped in its tier color (e.g. red for ``high``)."""
+    color = _PRIORITY_COLOR.get(priority, Fore.YELLOW)
+    return f"{color}{priority}{Style.RESET_ALL}"
+
+
+def _status(task: Responsibility) -> str:
+    """A colored, emoji-tagged done/todo badge for a task."""
+    if task.completed:
+        return f"{Fore.GREEN}✅ done{Style.RESET_ALL}"
+    return f"{Fore.LIGHTBLACK_EX}⬜ todo{Style.RESET_ALL}"
+
+
+def _header(text: str) -> None:
+    """Print a bright, bordered section header."""
+    bar = "=" * 50
+    print(f"{Fore.CYAN}{Style.BRIGHT}{bar}")
+    print(f"{Fore.CYAN}{Style.BRIGHT}{text}")
+    print(f"{Fore.CYAN}{Style.BRIGHT}{bar}")
 
 
 def main() -> None:
@@ -93,35 +140,34 @@ def main() -> None:
     # 4. Build and print today's schedule for each pet.
     constraints = Constraints(available_minutes=240, day_of_week="Monday")
 
-    print("=" * 50)
-    print(f"Today's Schedule for {owner.name}")
-    print("=" * 50)
+    _header(f"🐾 Today's Schedule for {owner.name}")
 
     for pet in owner.pets:
         plan = Plan(owner=owner, pet=pet, constraints=constraints, date="2026-06-30")
         plan.build()
 
-        print(f"\n{pet.name} ({pet.species})")
+        print(f"\n{Style.BRIGHT}{pet.name} ({pet.species})")
         print("-" * 50)
         for item in plan.scheduled:
+            task = item.responsibility
             print(
-                f"  {item.start_time}-{item.end_time}  "
-                f"{item.responsibility.title} "
-                f"({item.responsibility.category}, {item.responsibility.priority})"
+                f"  {Fore.CYAN}{item.start_time}-{item.end_time}{Style.RESET_ALL}  "
+                f"{category_emoji(task.category)} {task.title} "
+                f"({task.category}, {priority_emoji(task.priority)} "
+                f"{_priority_colored(task.priority)})"
             )
-        print(f"  Total: {plan.total_minutes()} min of care")
+        print(f"  {Style.DIM}Total: {plan.total_minutes()} min of care{Style.RESET_ALL}")
 
         # Surface any overlapping slots as a warning (never crashes).
         conflict = plan.detect_conflicts()
         if conflict:
-            print(f"  {conflict}")
+            print(f"  {Fore.RED}⚠️  {conflict}{Style.RESET_ALL}")
 
     # 5. Verify Scheduler.sort_by_time(): tasks were added out of order above,
     #    so feeding raw (unsorted) Scheduler items should print scrambled, and
     #    sort_by_time() should put them back into clock order.
-    print("\n" + "=" * 50)
-    print("Verify sorting: Scheduler.sort_by_time()")
-    print("=" * 50)
+    print()
+    _header("Verify sorting: Scheduler.sort_by_time()")
 
     unsorted = [
         Scheduler(task, task.fixed_time, task.fixed_time)
@@ -129,27 +175,32 @@ def main() -> None:
     ]
     print("\nAs added (out of order):")
     for item in unsorted:
-        print(f"  {item.start_time}  {item.responsibility.title}")
+        task = item.responsibility
+        print(f"  {Fore.CYAN}{item.start_time}{Style.RESET_ALL}  "
+              f"{category_emoji(task.category)} {task.title}")
 
     print("\nAfter sort_by_time():")
     for item in Scheduler.sort_by_time(unsorted):
-        print(f"  {item.start_time}  {item.responsibility.title}")
+        task = item.responsibility
+        print(f"  {Fore.CYAN}{item.start_time}{Style.RESET_ALL}  "
+              f"{category_emoji(task.category)} {task.title}")
 
     # 5b. Verify Scheduler.sort_by_priority(): the same items reordered by
     #     priority tier (high -> low), with start time breaking ties, so the
     #     most important tasks surface first regardless of when they occur.
     print("\nAfter sort_by_priority():")
     for item in Scheduler.sort_by_priority(unsorted):
+        task = item.responsibility
         print(
-            f"  {item.start_time}  {item.responsibility.title} "
-            f"({item.responsibility.priority})"
+            f"  {Fore.CYAN}{item.start_time}{Style.RESET_ALL}  "
+            f"{category_emoji(task.category)} {task.title} "
+            f"({priority_emoji(task.priority)} {_priority_colored(task.priority)})"
         )
 
     # 6. Verify auto-recurrence: completing a daily/weekly task should append a
     #    fresh, uncompleted copy to the same pet for its next occurrence.
-    print("\n" + "=" * 50)
-    print("Verify recurrence: mark_complete() spawns next occurrence")
-    print("=" * 50)
+    print()
+    _header("Verify recurrence: mark_complete() spawns next occurrence")
 
     morning_walk = rex.responsibilities[1]  # daily task
     print(f"\nRex has {len(rex.responsibilities)} tasks before completing "
@@ -159,20 +210,17 @@ def main() -> None:
     print(f"Rex has {len(rex.responsibilities)} tasks after completing it "
           f"(next occurrence auto-added):")
     for task in rex.responsibilities:
-        flag = "done" if task.completed else "todo"
-        print(f"  [{flag}] {task.title}")
+        print(f"  {_status(task)}  {category_emoji(task.category)} {task.title}")
 
     # 7. Verify Owner.filter_tasks(): with some tasks now completed (and their
     #    next occurrences pending), filter by completion status and by pet name.
-    print("\n" + "=" * 50)
-    print("Verify filtering: Owner.filter_tasks()")
-    print("=" * 50)
+    print()
+    _header("Verify filtering: Owner.filter_tasks()")
 
     def show(label: str, tasks: list[Responsibility]) -> None:
-        print(f"\n{label} ({len(tasks)}):")
+        print(f"\n{Style.BRIGHT}{label} ({len(tasks)}):")
         for task in tasks:
-            flag = "done" if task.completed else "todo"
-            print(f"  [{flag}] {task.title}")
+            print(f"  {_status(task)}  {category_emoji(task.category)} {task.title}")
 
     show("All tasks", owner.filter_tasks())
     show("Completed only", owner.filter_tasks(completed=True))
