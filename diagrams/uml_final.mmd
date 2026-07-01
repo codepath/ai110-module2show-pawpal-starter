@@ -1,0 +1,79 @@
+classDiagram
+    %% PawPal+ object design (final).
+
+    class Owner {
+        +str name
+        +list~Pet~ pets
+        +dict preferences
+        +add_pet(pet) void
+        +filter_tasks(completed, pet_name) list~Responsibility~
+    }
+    class Pet {
+        +str name
+        +str species
+        +str energy_level
+        +str notes
+        +list~Responsibility~ responsibilities
+        +add_responsibility(task) void
+    }
+    class Responsibility {
+        +str title
+        +int duration_minutes
+        +str priority
+        +str category
+        +str recurrence
+        +str weekday
+        +str fixed_time
+        +bool essential
+        +bool completed
+        +Pet pet
+        +priority_weight() int
+        +next_occurrence() Responsibility
+        +mark_complete() void
+    }
+    class Constraints {
+        +int available_minutes
+        +str day_start
+        +str day_end
+        +str day_of_week
+        +has_time_for(remaining, duration) bool
+        +window_minutes() int
+    }
+    class Plan {
+        +Owner owner
+        +Pet pet
+        +Constraints constraints
+        +str date
+        +list~Scheduler~ scheduled
+        +list~Responsibility~ skipped
+        +Explanation explanation
+        +build() void
+        +total_minutes() int
+        +detect_conflicts() str
+        +as_rows() list
+    }
+    class Scheduler {
+        +Responsibility responsibility
+        +str start_time
+        +str end_time
+        +start_minutes() int
+        +sort_by_time(items)$ list~Scheduler~
+    }
+    class Explanation {
+        +str summary
+        +str strategy
+        +list~str~ reasons
+        +list~str~ skipped_reasons
+        +as_text() str
+    }
+
+    Owner "1" --> "*" Pet : owns
+    Pet "1" --> "*" Responsibility : has
+    Responsibility "*" --> "1" Pet : belongs to
+    Owner ..> Responsibility : filters
+    Plan --> Owner : built for
+    Plan --> Pet : built for
+    Plan --> Constraints : uses
+    Plan "1" --> "*" Scheduler : produces
+    Scheduler --> Responsibility : wraps
+    Plan "1" --> "1" Explanation : explained by
