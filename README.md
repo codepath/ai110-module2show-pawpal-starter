@@ -68,7 +68,6 @@ Mittens (cat)
 ```
 ## 🧪 Testing PawPal+
 
-These tests focus on the happy path and ensuring that edge cases are handled. It is focusing that sorting, filtering, and recurring tasks are handled correctly. For example, it tests for a daily task to be added for the next day if it is marked completed. Furthermore, it tests to ensure the user is notified if a duplicate tasks is found. 
 
 ### Sample test output:
 
@@ -87,11 +86,7 @@ tests\test_pawpal.py ..................................................      [10
 
 ```
 
-### Confidence levels
-Based on the tests, my confidence level is a 5. The tests thoroughly cover edge cases that will cause the site to crash, and ensures graceful handling for duplicates.
 
-## Tradeoffs
-One tradeoff is that in detect_conflicts() function, is we use a nested loop to go through items in each section, so it is O(n^2) instead of O(n). So I traded a slower space complexity in order for simpler and easier-to-understand code.
 
 ## 📐 Smarter Scheduling
 
@@ -106,14 +101,28 @@ One tradeoff is that in detect_conflicts() function, is we use a nested loop to 
 
 
 
+## ✨ Features
+
+- **Multi-pet management** — add multiple pets (species, energy level) under one owner, with graceful notices when a duplicate pet name is entered.
+- **Rich task modeling** — each task carries a duration, priority, category, recurrence (daily/weekly/once), optional weekday, optional fixed time, and an "essential" flag.
+- **Owner preferences** — set a preferred time of day per activity (e.g. walks in the afternoon) that nudges flexible tasks in the schedule.
+- **Constraint-aware scheduling** — `build()` plans a day within a time budget and a start/end window: essentials are placed first and never dropped, then remaining tasks fill in by priority (shorter first) while time allows.
+- **Fixed-time pinning** — appointments pinned to a clock time are placed exactly, and flexible tasks flow around them.
+- **Sorting & filtering** — sort tasks by priority, duration, or title, and filter by pet and completion status (`filter_tasks()`).
+- **Recurring tasks** — completing a daily/weekly task auto-enqueues its next occurrence (`mark_complete()` / `next_occurrence()`), and completion is idempotent.
+- **Conflict detection** — overlapping time slots are surfaced as a warning both when adding a fixed-time task and after building the schedule (`detect_conflicts()`).
+- **Explained plans** — every schedule includes a summary, strategy, per-task reasons, and reasons for anything skipped.
+- **Polished Streamlit UI** — filtered/sorted tasks render in a clean table with success/warning status banners.
+- **Tested** — a 50-case suite covers scheduling, sorting, filtering, recurrence, and conflict edge cases.
+
 ## 📸 Demo Walkthrough
 
 Describe your app in numbered steps so a reader can follow along without watching a video:
 
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
+1. Under the owner section, you list preferences for walk time, feeding time, enrichment time, and grooming time. You can list your preferring time to start each activity.
+2. You can then input pet's information. You can put their name, species and energy level. If you enter a duplicate pet, then you will be notified that you have entered a duplicate pet.
+3. You can then add tasks to your chosen pet. You can select the task title, the duration of the workout, the priority level of the workout, the category of the workout (walk, grooming, feeding etc), the recurrence of the task (how often that particular tasks take place), if weekly was selected as the recurrence (you can then select which particular day you want), then you can select whether the task is essential and whether it is set to a fixed time. If you pin multiple items to the same fixed time, then you will be notified that an item already has that fixed time.
+4. You can then view the current tasks where you can filter by pet, status (completed or not completed). You can also sort by added order, priority level, duration, and title. Finally, you can then mark a task as completed when you are finished. 
+5. You can build the schedule for your chosen pet. You can give the time budget, the day of the week you want to generate the tasks, and the start and end time for your pet. Then you can click generate schedule to generate a schedule for the day.
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->

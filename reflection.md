@@ -30,11 +30,14 @@
 
 - What constraints does your scheduler consider (for example: time, priority, preferences)?
 - How did you decide which constraints mattered most?
+Our constraints focus on available time. You only have so much time, so we focused on how much time that we had. The total time budget and the start/end window you have.
 
 **b. Tradeoffs**
 
 - Describe one tradeoff your scheduler makes.
 - Why is that tradeoff reasonable for this scenario?
+
+One tradeoff is that in detect_conflicts() function, is we use a nested loop to go through items in each section, so it is O(n^2) instead of O(n). So I traded a slower space complexity in order for simpler and easier-to-understand code. It was reasonable because it was figured that would be never be a large enough of tasks to where it would cause issue to user.
 
 ---
 
@@ -42,27 +45,26 @@
 
 **a. How you used AI**
 
-- How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
-- What kinds of prompts or questions were most helpful?
+- I used it for design brainstorming and optimizing code. I told it to focus on a specific function when debugging or just help implement a specific feature. I did not want to overload it with prompt, so I prompted with an simple focused prompt.
 
 **b. Judgment and verification**
 
-- Describe one moment where you did not accept an AI suggestion as-is.
-- How did you evaluate or verify what the AI suggested?
 
+  When it gave me the initial classes for the uml_draft, I thought it overly complicated and created a bunch of unnecessary classes, so I asked it to combine certain classes where I felt that they were too closely related.
 ---
 
 ## 4. Testing and Verification
 
 **a. What you tested**
 
-- What behaviors did you test?
-- Why were these tests important?
+
+These tests focus on the happy path and ensuring that edge cases are handled. It is focusing that sorting, filtering, and recurring tasks are handled correctly. For example, it tests for a daily task to be added for the next day if it is marked completed. Furthermore, it tests to ensure the user is notified if a duplicate tasks is found. 
+
 
 **b. Confidence**
 
-- How confident are you that your scheduler works correctly?
-- What edge cases would you test next if you had more time?
+Based on the tests, my confidence level is a 5. The tests thoroughly cover edge cases that will cause the site to crash, and ensures graceful handling for duplicates. I think testing for a large number of pets would be interesting to see how it handles it.
+
 
 ---
 
@@ -71,11 +73,14 @@
 **a. What went well**
 
 - What part of this project are you most satisfied with?
+  - I am satisfied with how easy it is to input the information about your pet. I think I have made my website incredibly user-friendly and easy to use.
 
 **b. What you would improve**
 
 - If you had another iteration, what would you improve or redesign?
+  - I would really love to have this to be able to survive a page refresh. I think something like local storage would be great.
 
 **c. Key takeaway**
 
 - What is one important thing you learned about designing systems or working with AI on this project?
+  - The main thing that I learned was the importance of using AI as a co-developer instead of letting it control the entire app. You need to work together with AI, or AI can go over complicated with your app.
