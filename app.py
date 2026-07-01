@@ -221,29 +221,56 @@ elif sort_choice == "Title (A → Z)":
 if not tasks:
     st.info("No tasks match the current filter.")
 else:
-    header = st.columns([3, 1, 1, 2, 2, 1])
-    for col, label in zip(header, ["Task", "Min", "Priority", "Category", "When", ""]):
-        col.markdown(f"**{label}**")
-    for task in tasks:
-        row = st.columns([3, 1, 1, 2, 2, 1])
-        status = "✅" if task.completed else "⬜"
-        essential = " ⭐" if task.essential else ""
-        row[0].write(f"{status} {task.title}{essential}")
-        row[1].write(str(task.duration_minutes))
-        row[2].write(task.priority)
-        row[3].write(task.category)
+    # Summary banners: a green success line for what's done, an amber warning
+    # for what's still outstanding.
+    done = [t for t in tasks if t.completed]
+    pending = [t for t in tasks if not t.completed]
+    if pending:
+        essential_left = sum(1 for t in pending if t.essential)
+        note = f" ({essential_left} essential)" if essential_left else ""
+        st.warning(f"⬜ {len(pending)} task{'s' if len(pending) != 1 else ''} still to do{note}.")
+    if done:
+        st.success(f"✅ {len(done)} of {len(tasks)} task{'s' if len(tasks) != 1 else ''} complete.")
+
+    def when(task):
         if task.fixed_time:
-            row[4].write(f"📌 {task.fixed_time}")
-        elif task.recurrence == "weekly":
-            row[4].write(f"{task.recurrence} · {task.weekday}")
-        else:
-            row[4].write(task.recurrence)
-        if task.completed:
-            row[5].write("done")
-        elif row[5].button("Done", key=f"done_{id(task)}"):
-            # Recurring tasks auto-enqueue a fresh copy for the next occurrence.
-            task.mark_complete()
-            st.rerun()
+            return f"📌 {task.fixed_time}"
+        if task.recurrence == "weekly":
+            return f"weekly · {task.weekday}"
+        return task.recurrence
+
+    st.table(
+        [
+            {
+                "Status": "✅ Done" if task.completed else "⬜ To do",
+                "Task": f"{task.title}{' ⭐' if task.essential else ''}",
+                "Pet": task.pet.name if task.pet else "—",
+                "Priority": task.priority,
+                "Min": task.duration_minutes,
+                "Category": task.category,
+                "When": when(task),
+            }
+            for task in tasks
+        ]
+    )
+
+    # A table can't carry per-row buttons, so completing a task is a compact
+    # picker + button. mark_complete() auto-enqueues recurring tasks' next run.
+    if pending:
+        lookup: dict[str, Responsibility] = {}
+        for index, task in enumerate(pending):
+            label = f"{task.title} ({task.pet.name})" if task.pet else task.title
+            if label in lookup:  # disambiguate identical titles on the same pet
+                label = f"{label} #{index + 1}"
+            lookup[label] = task
+        mc1, mc2 = st.columns([3, 1])
+        with mc1:
+            choice = st.selectbox("Mark a task complete", list(lookup), key="mark_choice")
+        with mc2:
+            st.write("")  # nudge the button down to align with the selectbox
+            if st.button("Mark done"):
+                lookup[choice].mark_complete()
+                st.rerun()
 
 st.divider()
 
