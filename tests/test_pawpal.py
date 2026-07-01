@@ -176,6 +176,38 @@ class TestPriorityAndBudget:
         # Unknown label falls back to medium (2).
         assert make_task("x", priority="bogus").priority_weight() == 2
 
+    def test_priority_score_is_tier_weighted_minus_duration(self):
+        # Weighted sum: 100*tier - duration (higher = ranked first).
+        assert make_task("h", 30, priority="high").priority_score() == 100 * 3 - 30
+        assert make_task("m", 60, priority="medium").priority_score() == 100 * 2 - 60
+
+    def test_higher_tier_beats_lower_regardless_of_length(self):
+        # Tier dominates: a long high-priority task still outranks a short
+        # medium one, so under a one-task budget the high task is the one kept.
+        plan = make_plan(
+            [
+                make_task("QuickMedium", 10, priority="medium"),
+                make_task("LongHigh", 60, priority="high"),
+            ],
+            available_minutes=60,
+        )
+        assert titles(plan.scheduled) == ["LongHigh"]
+        assert titles(plan.skipped) == ["QuickMedium"]
+
+    def test_extreme_duration_gap_can_flip_a_near_tier(self):
+        # The "duration nudges" edge: a very long high-priority task
+        # (300-150=150) scores below a quick medium one (200-10=190), so with
+        # room for only one, the shorter medium task wins.
+        plan = make_plan(
+            [
+                make_task("QuickMedium", 10, priority="medium"),
+                make_task("VeryLongHigh", 150, priority="high"),
+            ],
+            available_minutes=150,
+        )
+        assert titles(plan.scheduled) == ["QuickMedium"]
+        assert titles(plan.skipped) == ["VeryLongHigh"]
+
     def test_priority_order_under_tight_budget(self):
         # Only 60 of the 90 minutes fit: high + medium kept, low dropped.
         plan = make_plan(

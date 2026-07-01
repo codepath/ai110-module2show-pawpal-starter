@@ -13,6 +13,13 @@ from dataclasses import dataclass, field, replace
 # Numeric weight per priority label; used for sorting tasks.
 _PRIORITY_WEIGHTS = {"high": 3, "medium": 2, "low": 1}
 
+# Weighted-score coefficients (see Responsibility.priority_score). The tier
+# weight dominates so a more essential task is scheduled first; the per-minute
+# penalty only nudges ordering — it takes a large duration gap (> one tier's
+# worth of minutes) for a shorter, lower-tier task to overtake a higher one.
+_PRIORITY_TIER_WEIGHT = 100
+_DURATION_PENALTY = 1
+
 # Earliest preferred clock time (minutes since midnight) for a part of day.
 # Used to honor owner preferences such as {"walk_time": "afternoon"}.
 _TIME_OF_DAY_START = {"morning": 7 * 60, "afternoon": 12 * 60, "evening": 17 * 60}
@@ -108,8 +115,20 @@ class Responsibility:
     pet: Pet | None = field(default=None, repr=False, compare=False)
 
     def priority_weight(self) -> int:
-        """Numeric weight for sorting (high=3, medium=2, low=1)."""
+        """Numeric weight for the priority tier (high=3, medium=2, low=1)."""
         return _PRIORITY_WEIGHTS.get(self.priority, 2)
+
+    def priority_score(self) -> float:
+        """Weighted score used to rank optional tasks (higher = scheduled first).
+
+        A weighted sum of two factors: the priority tier (heavily weighted, so a
+        more essential task is prioritized) minus a small per-minute penalty (so
+        that among comparably-important tasks the shorter, more efficient one
+        goes first). The tier weight dominates, so a higher-priority task
+        normally outranks a lower one regardless of length; only an extreme
+        duration gap — more than one tier's worth of minutes — can let a short
+        lower-tier task overtake a much longer higher-tier one."""
+        return _PRIORITY_TIER_WEIGHT * self.priority_weight() - _DURATION_PENALTY * self.duration_minutes
 
     def next_occurrence(self) -> Responsibility:
         """A fresh, uncompleted copy of this task for its next scheduled day.
@@ -227,7 +246,8 @@ class Plan:
         Reads tasks from ``self.pet.responsibilities`` and applies
         ``self.owner.preferences``. Essential responsibilities are scheduled
         first and are never dropped, even if doing so exceeds the budget;
-        non-essential tasks are filled in by priority while time remains."""
+        non-essential tasks are filled in by their weighted priority score
+        (tier blended with duration efficiency) while time remains."""
         # Reset results so build() is idempotent.
         self.scheduled = []
         self.skipped = []
@@ -253,12 +273,14 @@ class Plan:
                 continue
             eligible.append(task)
 
-        # 2. Order non-essential tasks by priority (high first), shorter first to
-        #    fit more in. Essential tasks are handled separately and always kept.
+        # 2. Rank non-essential tasks by their weighted priority score (tier
+        #    heavily weighted, minus a small per-minute penalty), highest first,
+        #    so more essential tasks come first and shorter ones break near-ties.
+        #    Essential tasks are handled separately and always kept.
         essential = [t for t in eligible if t.essential]
         optional = sorted(
             (t for t in eligible if not t.essential),
-            key=lambda t: (-t.priority_weight(), t.duration_minutes),
+            key=lambda t: -t.priority_score(),
         )
 
         # 3. Select tasks against the time budget. Essentials are forced in even
@@ -356,8 +378,9 @@ class Plan:
             ),
             strategy=(
                 "Essential tasks (feeding, meds) are scheduled first and never "
-                "dropped. Remaining tasks are added by priority while the "
-                f"{self.constraints.available_minutes}-min budget and "
+                "dropped. Remaining tasks are added by weighted priority (higher "
+                "tiers first, shorter tasks breaking near-ties) "
+                f"while the {self.constraints.available_minutes}-min budget and "
                 f"{self.constraints.day_start}-{self.constraints.day_end} window allow."
             ),
             reasons=reasons,

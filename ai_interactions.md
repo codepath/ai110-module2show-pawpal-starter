@@ -11,12 +11,15 @@
 **What task did you give the agent?**
 
 <!-- Describe the goal you asked the agent to accomplish -->
+I asked it to refactor my code to take into account weighted prioritization. So, I wanted it to focus on tasks that are seem as more essential and prioritze scheduling those.
 
 **What did the agent do?**
 
 <!-- List the steps the agent took (files edited, commands run, etc.) -->
+It edited pawpal_system and added a responsibility.priority_schedule, which is designed to give a priority weight to each test. It then added more tests to ensure it works.
 
 **What did you have to verify or fix manually?**
+I looked over and decided to re-word my prompt to ensure it focus on essential tasks when prioritizing tasks.
 
 <!-- Describe anything the agent got wrong or that required human review -->
 
