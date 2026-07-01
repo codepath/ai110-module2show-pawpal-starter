@@ -302,6 +302,16 @@ with wc1:
 with wc2:
     day_end = st.time_input("Day end", value=time(21, 0))
 
+schedule_order = st.radio(
+    "Schedule order",
+    ["Clock time", "Priority (high → low)"],
+    horizontal=True,
+    help=(
+        "Clock time lists tasks as they occur through the day; "
+        "Priority lists the highest-priority tasks first (time breaks ties)."
+    ),
+)
+
 sched_pet = next(pet for pet in owner.pets if pet.name == sched_pet_name)
 
 if st.button("Generate schedule"):
@@ -319,8 +329,9 @@ if st.button("Generate schedule"):
         st.warning(conflict)
 
     if plan.scheduled:
+        order = "priority" if schedule_order.startswith("Priority") else "time"
         st.write(f"Schedule for {sched_pet.name} — {plan.total_minutes()} min of care:")
-        st.table(plan.as_rows())
+        st.table(plan.as_rows(order=order))
     else:
         st.info("Nothing scheduled for these constraints.")
 

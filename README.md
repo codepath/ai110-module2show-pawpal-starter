@@ -55,8 +55,10 @@ Rex (dog)
 --------------------------------------------------
   08:00-08:30  Morning walk (walk, high)
   08:30-08:40  Breakfast (feeding, high)
+  08:30-08:40  Insulin shot (meds, high)
   18:00-18:30  Evening walk (walk, medium)
-  Total: 70 min of care
+  Total: 80 min of care
+  Warning - schedule conflict: 'Breakfast' (08:30-08:40) overlaps 'Insulin shot' (08:30-08:40).
 
 Mittens (cat)
 --------------------------------------------------
@@ -64,6 +66,28 @@ Mittens (cat)
   12:00-12:15  Litter box cleaning (grooming, medium)
   19:00-19:20  Play time (enrichment, low)
   Total: 45 min of care
+
+==================================================
+Verify sorting: Scheduler.sort_by_time()
+==================================================
+
+As added (out of order):
+  18:00  Evening walk
+  08:00  Morning walk
+  08:30  Breakfast
+  08:30  Insulin shot
+
+After sort_by_time():
+  08:00  Morning walk
+  08:30  Breakfast
+  08:30  Insulin shot
+  18:00  Evening walk
+
+After sort_by_priority():
+  08:00  Morning walk (high)
+  08:30  Breakfast (high)
+  08:30  Insulin shot (high)
+  18:00  Evening walk (medium)
 
 ```
 ## 🧪 Testing PawPal+
@@ -78,11 +102,11 @@ $ python -m pytest
 platform win32 -- Python 3.13.14, pytest-9.0.3, pluggy-1.6.0
 rootdir: C:\Users\varve\python\codepath\ai110\module-2\week-2\pawpal
 plugins: anyio-4.13.0
-collected 50 items                                                                 
+collected 53 items                                                                 
 
-tests\test_pawpal.py ..................................................      [100%]
+tests\test_pawpal.py .....................................................      [100%]
 
-=============================== 50 passed in 0.08s ================================
+=============================== 53 passed in 0.08s ================================
 
 ```
 
@@ -94,7 +118,7 @@ tests\test_pawpal.py ..................................................      [10
 
 | Feature | Method(s) | Notes |
 |---------|-----------|-------|
-| Task sorting | sort_by_time() | sorts item by time  |
+| Task sorting | sort_by_time() / sort_by_priority() | sorts scheduled items by clock time, or by priority tier (high → low) with time breaking ties |
 | Filtering | filter_tasks() | filter tasks by completion status or by pet |
 | Conflict handling | detect_conflicts() | checks the schedule and detects overlapping time conflcits |
 | Recurring tasks | next_occurrence | it spawns a new task after the one is completed |
@@ -132,3 +156,33 @@ Describe your app in numbered steps so a reader can follow along without watchin
 - We added marshmellow schemas:  ResponsibilitySchema, PetSchema, OwnwerSchema. 
 - In data.jaon, Owner.save_to_json() and Owner.load_from_json() was added.
 - In app.py, on the first load, the data is hydrates from data.json. Also, owner.save_to_json() is called at the end of every rerun, so it is written to disk before the application restarts.
+
+
+## Strech Goal: Challenge 3: 
+The different sorting methods also include priority-based scheduling as shown below:
+
+```bash
+==================================================
+Verify sorting: Scheduler.sort_by_time()
+==================================================
+
+As added (out of order):
+  18:00  Evening walk
+  08:00  Morning walk
+  08:30  Breakfast
+  08:30  Insulin shot
+
+After sort_by_time():
+  08:00  Morning walk
+  08:30  Breakfast
+  08:30  Insulin shot
+  18:00  Evening walk
+
+After sort_by_priority():
+  08:00  Morning walk (high)
+  08:30  Breakfast (high)
+  08:30  Insulin shot (high)
+  18:00  Evening walk (medium)
+
+```
+

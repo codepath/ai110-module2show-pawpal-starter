@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field, replace
+from enum import Enum
 
 from marshmallow import Schema, fields, post_load
 
@@ -31,6 +32,39 @@ _DURATION_PENALTY = 1
 # Earliest preferred clock time (minutes since midnight) for a part of day.
 # Used to honor owner preferences such as {"walk_time": "afternoon"}.
 _TIME_OF_DAY_START = {"morning": 7 * 60, "afternoon": 12 * 60, "evening": 17 * 60}
+
+
+class Priority(str, Enum):
+    """The priority tiers a task can have.
+
+    Subclasses ``str`` so a ``Priority`` is interchangeable with its plain
+    string value (``"low"``/``"medium"``/``"high"``): JSON persistence, the UI
+    selectboxes, and any existing string comparisons keep working, while the set
+    of levels and their sort weights now live in one place instead of being
+    scattered as bare strings.
+    """
+
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+
+    @property
+    def weight(self) -> int:
+        """Numeric sort weight for this tier (high=3, medium=2, low=1)."""
+        return _PRIORITY_WEIGHTS[self.value]
+
+    @classmethod
+    def coerce(cls, value: "str | Priority") -> "Priority":
+        """Convert a string (or ``Priority``) to a ``Priority``.
+
+        Falls back to :attr:`MEDIUM` for anything unrecognized, matching the
+        historical default weight used for unknown priority strings."""
+        if isinstance(value, cls):
+            return value
+        try:
+            return cls(value)
+        except ValueError:
+            return cls.MEDIUM
 
 
 def to_minutes(hhmm: str) -> int:
@@ -145,8 +179,11 @@ class Responsibility:
     pet: Pet | None = field(default=None, repr=False, compare=False)
 
     def priority_weight(self) -> int:
-        """Numeric weight for the priority tier (high=3, medium=2, low=1)."""
-        return _PRIORITY_WEIGHTS.get(self.priority, 2)
+        """Numeric weight for the priority tier (high=3, medium=2, low=1).
+
+        Routes through :class:`Priority` so unknown values fall back to the
+        medium weight, as before."""
+        return Priority.coerce(self.priority).weight
 
     def priority_score(self) -> float:
         """Weighted score used to rank optional tasks (higher = scheduled first).
@@ -250,6 +287,20 @@ class Scheduler:
     def sort_by_time(items: list[Scheduler]) -> list[Scheduler]:
         """Return ``items`` sorted into clock order by their start time."""
         return sorted(items, key=lambda item: item.start_minutes())
+
+    @staticmethod
+    def sort_by_priority(items: list[Scheduler]) -> list[Scheduler]:
+        """Return ``items`` sorted by task priority, highest first.
+
+        Start time breaks ties, so tasks sharing a priority tier stay in clock
+        order within that tier."""
+        return sorted(
+            items,
+            key=lambda item: (
+                -item.responsibility.priority_weight(),
+                item.start_minutes(),
+            ),
+        )
 
 
 @dataclass
@@ -469,8 +520,17 @@ class Plan:
             return ""
         return "Warning - schedule conflict: " + "; ".join(overlaps) + "."
 
-    def as_rows(self) -> list[dict]:
-        """Schedule as table rows for the Streamlit display (reads ``scheduled``)."""
+    def as_rows(self, order: str = "time") -> list[dict]:
+        """Schedule as table rows for the Streamlit display (reads ``scheduled``).
+
+        ``order`` controls row ordering: ``"time"`` (default) lists tasks in
+        clock order, ``"priority"`` lists highest-priority tasks first (time
+        breaking ties). Any other value falls back to clock order."""
+        items = (
+            Scheduler.sort_by_priority(self.scheduled)
+            if order == "priority"
+            else Scheduler.sort_by_time(self.scheduled)
+        )
         return [
             {
                 "Start": item.start_time,
@@ -480,7 +540,7 @@ class Plan:
                 "Priority": item.responsibility.priority,
                 "Minutes": item.responsibility.duration_minutes,
             }
-            for item in self.scheduled
+            for item in items
         ]
 
 

@@ -135,6 +135,16 @@ def main() -> None:
     for item in Scheduler.sort_by_time(unsorted):
         print(f"  {item.start_time}  {item.responsibility.title}")
 
+    # 5b. Verify Scheduler.sort_by_priority(): the same items reordered by
+    #     priority tier (high -> low), with start time breaking ties, so the
+    #     most important tasks surface first regardless of when they occur.
+    print("\nAfter sort_by_priority():")
+    for item in Scheduler.sort_by_priority(unsorted):
+        print(
+            f"  {item.start_time}  {item.responsibility.title} "
+            f"({item.responsibility.priority})"
+        )
+
     # 6. Verify auto-recurrence: completing a daily/weekly task should append a
     #    fresh, uncompleted copy to the same pet for its next occurrence.
     print("\n" + "=" * 50)
