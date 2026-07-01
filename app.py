@@ -1,6 +1,7 @@
 from datetime import time
 
 import streamlit as st
+from marshmallow import ValidationError
 
 from pawpal_system import (
     Pet,
@@ -52,9 +53,15 @@ the day's budget and window allow.
 # --------------------------------------------------------------------------- #
 # Session state: a single Owner persists across reruns; pets and their tasks
 # live on that owner, so every widget below reads/writes the same object graph.
+# On first load we hydrate that owner from data.json (written by save below) so
+# pets and tasks survive page refreshes and application restarts; if the file is
+# missing/unreadable we start fresh.
 # --------------------------------------------------------------------------- #
 if "owner" not in st.session_state:
-    st.session_state.owner = Owner(name="Jordan")
+    try:
+        st.session_state.owner = Owner.load_from_json()
+    except (FileNotFoundError, OSError, ValidationError, ValueError):
+        st.session_state.owner = Owner(name="Jordan")
 owner = st.session_state.owner
 
 st.divider()
@@ -109,6 +116,7 @@ with st.form("add_pet", clear_on_submit=True):
             st.success(f"Added {name}.")
 
 if not owner.pets:
+    owner.save_to_json()  # persist owner name/preferences before the early exit
     st.info("Add a pet above to get started.")
     st.stop()
 
@@ -317,3 +325,10 @@ if st.button("Generate schedule"):
         st.info("Nothing scheduled for these constraints.")
 
     st.markdown(plan.explanation.as_text())
+
+# --------------------------------------------------------------------------- #
+# Persist the current owner/pet/task graph on every rerun so all edits made
+# this session (added pets and tasks, completed tasks, preference changes)
+# survive a page refresh or restart. The derived plan/schedule is not saved.
+# --------------------------------------------------------------------------- #
+owner.save_to_json()

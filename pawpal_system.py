@@ -7,7 +7,15 @@ time-ordered schedule plus a human-readable explanation.
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field, replace
+
+from marshmallow import Schema, fields, post_load
+
+
+# Default on-disk location for the persisted owner/pet/task graph. Relative to
+# the working directory the app is launched from (the project root).
+DEFAULT_DATA_PATH = "data.json"
 
 
 # Numeric weight per priority label; used for sorting tasks.
@@ -95,6 +103,28 @@ class Owner:
                     continue
                 tasks.append(task)
         return tasks
+
+    def save_to_json(self, path: str = DEFAULT_DATA_PATH) -> None:
+        """Serialize this owner (with every pet and task) to a JSON file.
+
+        Uses ``OwnerSchema`` (marshmallow) to turn the object graph into a
+        plain dict, then writes it to ``path``. Called by the app after each
+        change so data survives page refreshes and application restarts.
+        """
+        with open(path, "w", encoding="utf-8") as handle:
+            json.dump(OwnerSchema().dump(self), handle, indent=2)
+
+    @classmethod
+    def load_from_json(cls, path: str = DEFAULT_DATA_PATH) -> "Owner":
+        """Rebuild an ``Owner`` (with pets and tasks) from a JSON file.
+
+        The inverse of :meth:`save_to_json`: reads ``path`` and lets
+        ``OwnerSchema`` reconstruct the object graph, re-linking each task to
+        its pet. Raises ``FileNotFoundError`` if ``path`` does not exist, so
+        callers can fall back to a fresh owner on first run.
+        """
+        with open(path, "r", encoding="utf-8") as handle:
+            return OwnerSchema().load(json.load(handle))
 
 
 @dataclass
@@ -452,3 +482,70 @@ class Plan:
             }
             for item in self.scheduled
         ]
+
+
+# --------------------------------------------------------------------------- #
+# JSON serialization (marshmallow)
+#
+# One schema per persisted dataclass. Only durable data is (de)serialized:
+# the derived plan/schedule and the Responsibility.pet back-reference are never
+# stored — the back-reference is re-established on load by add_responsibility /
+# add_pet, exactly as the app wires it up at runtime.
+# --------------------------------------------------------------------------- #
+class ResponsibilitySchema(Schema):
+    """(De)serializes a single :class:`Responsibility`."""
+
+    title = fields.Str(required=True)
+    duration_minutes = fields.Int(required=True)
+    priority = fields.Str(load_default="medium")
+    category = fields.Str(load_default="general")
+    recurrence = fields.Str(load_default="daily")
+    weekday = fields.Str(load_default=None, allow_none=True)
+    fixed_time = fields.Str(load_default=None, allow_none=True)
+    essential = fields.Bool(load_default=False)
+    completed = fields.Bool(load_default=False)
+
+    @post_load
+    def make_responsibility(self, data, **kwargs) -> Responsibility:
+        return Responsibility(**data)
+
+
+class PetSchema(Schema):
+    """(De)serializes a :class:`Pet` and its list of tasks."""
+
+    name = fields.Str(required=True)
+    species = fields.Str(load_default="dog")
+    energy_level = fields.Str(load_default="medium")
+    notes = fields.Str(load_default="")
+    responsibilities = fields.List(
+        fields.Nested(ResponsibilitySchema), load_default=list
+    )
+
+    @post_load
+    def make_pet(self, data, **kwargs) -> Pet:
+        # Build the pet without tasks, then attach each via add_responsibility
+        # so the Responsibility.pet back-reference is restored (recurrence relies
+        # on it), mirroring how the app builds pets at runtime.
+        tasks = data.pop("responsibilities", [])
+        pet = Pet(**data)
+        for task in tasks:
+            pet.add_responsibility(task)
+        return pet
+
+
+class OwnerSchema(Schema):
+    """(De)serializes the whole graph: an :class:`Owner` with pets and prefs."""
+
+    name = fields.Str(required=True)
+    preferences = fields.Dict(
+        keys=fields.Str(), values=fields.Str(), load_default=dict
+    )
+    pets = fields.List(fields.Nested(PetSchema), load_default=list)
+
+    @post_load
+    def make_owner(self, data, **kwargs) -> Owner:
+        pets = data.pop("pets", [])
+        owner = Owner(**data)
+        for pet in pets:
+            owner.add_pet(pet)
+        return owner

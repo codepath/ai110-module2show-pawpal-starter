@@ -3,3 +3,6 @@ __pycache__/
 .venv_new/
 .pytest_cache/
 .DS_Store
+
+# Runtime-persisted owner/pet/task data written by the app.
+data.json

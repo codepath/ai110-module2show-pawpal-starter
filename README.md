@@ -126,3 +126,9 @@ Describe your app in numbered steps so a reader can follow along without watchin
 5. You can build the schedule for your chosen pet. You can give the time budget, the day of the week you want to generate the tasks, and the start and end time for your pet. Then you can click generate schedule to generate a schedule for the day.
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
+
+
+## Data persistence
+- We added marshmellow schemas:  ResponsibilitySchema, PetSchema, OwnwerSchema. 
+- In data.jaon, Owner.save_to_json() and Owner.load_from_json() was added.
+- In app.py, on the first load, the data is hydrates from data.json. Also, owner.save_to_json() is called at the end of every rerun, so it is written to disk before the application restarts.
