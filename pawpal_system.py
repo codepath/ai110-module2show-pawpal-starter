@@ -6,7 +6,7 @@ method stubs. No logic yet — fill in the method bodies as you implement behavi
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 
 
 class PetTask:
@@ -15,6 +15,9 @@ class PetTask:
     # Single source of truth for priority ordering (higher = more urgent).
     PRIORITY_WEIGHTS = {"low": 1, "medium": 2, "high": 3}
 
+    # Recurring cadence -> how many days until the next occurrence.
+    FREQUENCY_DAYS = {"daily": 1, "weekly": 7}
+
     def __init__(
         self,
         title: str,
@@ -22,8 +25,11 @@ class PetTask:
         priority: str = "medium",
         category: str = "general",
         recurring: bool = False,
+        time: str | None = None,
+        frequency: str | None = None,
+        due_date: date | None = None,
     ) -> None:
-        """Create a task, validating its priority and duration."""
+        """Create a task, validating its priority, duration, and frequency."""
         priority = priority.lower()
         if priority not in self.PRIORITY_WEIGHTS:
             raise ValueError(
@@ -31,17 +37,45 @@ class PetTask:
             )
         if duration_minutes <= 0:
             raise ValueError(f"duration_minutes must be positive, got {duration_minutes}")
+        if frequency is not None and frequency not in self.FREQUENCY_DAYS:
+            raise ValueError(
+                f"frequency must be one of {list(self.FREQUENCY_DAYS)} or None, got {frequency!r}"
+            )
 
         self.title = title
         self.duration_minutes = duration_minutes
         self.priority = priority  # "low" | "medium" | "high"
         self.category = category
-        self.recurring = recurring
+        self.frequency = frequency  # None | "daily" | "weekly"
+        self.recurring = recurring or frequency is not None
+        self.time = time  # preferred start as "HH:MM", or None if unscheduled
+        self.due_date = due_date  # date this instance is due, or None
         self.status = "pending"  # "pending" | "completed"
 
-    def mark_complete(self) -> None:
-        """Mark this task as completed."""
+    def mark_complete(self) -> PetTask | None:
+        """Mark this task completed and, if recurring, return its next pending
+        occurrence; returns None (no duplicate) if already completed."""
+        if self.status == "completed":
+            return None
         self.status = "completed"
+        return self._next_occurrence()
+
+    def _next_occurrence(self) -> PetTask | None:
+        """Build the next pending instance of a recurring task (or None)."""
+        if self.frequency is None:
+            return None
+        base_date = self.due_date or date.today()
+        next_due = base_date + timedelta(days=self.FREQUENCY_DAYS[self.frequency])
+        return PetTask(
+            self.title,
+            self.duration_minutes,
+            self.priority,
+            category=self.category,
+            recurring=self.recurring,
+            time=self.time,
+            frequency=self.frequency,
+            due_date=next_due,
+        )
 
     def priority_weight(self) -> int:
         """Return a sortable number for this task's priority (higher = more urgent)."""
@@ -130,6 +164,33 @@ class DailyPlan:
         """Return a human-readable explanation of why the plan looks the way it does."""
         return self.reasoning
 
+    @staticmethod
+    def sort_by_time(tasks: list[PetTask]) -> list[PetTask]:
+        """Return tasks sorted by their "HH:MM" `time`, earliest first, with
+        untimed tasks (time is None) placed last."""
+        return sorted(tasks, key=lambda task: (task.time is None, task.time))
+
+    @staticmethod
+    def detect_conflicts(pets: list[Pet]) -> list[str]:
+        """Return non-raising warning strings for tasks sharing the same "HH:MM"
+        `time`, noting whether each clash is within one pet or across pets."""
+        by_time: dict[str, list[tuple[str, str]]] = {}
+        for pet in pets:
+            for task in pet.tasks:
+                if task.time is None:
+                    continue
+                by_time.setdefault(task.time, []).append((pet.name, task.title))
+
+        warnings: list[str] = []
+        for time in sorted(by_time):
+            entries = by_time[time]
+            if len(entries) < 2:
+                continue
+            scope = "same pet" if len({name for name, _ in entries}) == 1 else "different pets"
+            labels = ", ".join(f"{title} ({name})" for name, title in entries)
+            warnings.append(f"Conflict at {time}: {labels} [{scope}]")
+        return warnings
+
     # --- internal helpers -------------------------------------------------
 
     @staticmethod
@@ -217,10 +278,20 @@ class Owner:
         """Return every task across all of this owner's pets, flattened."""
         return [task for pet in self.pets for task in pet.tasks]
 
-    def tasks_for(self, pet_name: str) -> list[PetTask]:
-        """Return the tasks for one named pet (empty list if the pet is unknown)."""
+    def tasks_for(self, pet_name: str, status: str | None = None) -> list[PetTask]:
+        """Return the tasks for one named pet (empty list if the pet is unknown).
+
+        Pass `status` ("pending" or "completed") to keep only matching tasks.
+        """
         pet = self.get_pet(pet_name)
-        return list(pet.tasks) if pet is not None else []
+        tasks = list(pet.tasks) if pet is not None else []
+        if status is not None:
+            tasks = [task for task in tasks if task.status == status]
+        return tasks
+
+    def tasks_by_status(self, status: str) -> list[PetTask]:
+        """Return every task across all pets whose status matches `status`."""
+        return [task for task in self.all_tasks() if task.status == status]
 
     def build_plan(self, day: date | None = None) -> DailyPlan:
         """Build a DailyPlan from all pets' tasks under this owner's constraints."""

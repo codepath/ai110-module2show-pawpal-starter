@@ -3,13 +3,22 @@ classDiagram
 
     class Owner {
         +str name
-        +str pet_name
+        +list~Pet~ pets
+        +Constraints constraints
+        +add_pet(pet Pet) None
+        +remove_pet(name str) None
+        +get_pet(name str) Pet
+        +all_tasks() list~PetTask~
+        +tasks_for(pet_name str) list~PetTask~
+        +build_plan(day date) DailyPlan
+    }
+
+    class Pet {
+        +str name
         +str species
         +list~PetTask~ tasks
-        +Constraints constraints
         +add_task(task PetTask) None
         +remove_task(title str) None
-        +build_plan() DailyPlan
     }
 
     class PetTask {
@@ -18,6 +27,8 @@ classDiagram
         +str priority
         +str category
         +bool recurring
+        +str status
+        +mark_complete() None
         +priority_weight() int
         +summary() str
     }
@@ -36,12 +47,14 @@ classDiagram
         +list scheduled
         +list~PetTask~ skipped
         +str reasoning
+        +build(tasks list~PetTask~, constraints Constraints, day date) DailyPlan$
         +add(task PetTask, start_time str) None
         +total_minutes() int
         +explain() str
     }
 
-    Owner "1" *-- "many" PetTask : has
+    Owner "1" *-- "many" Pet : owns
+    Pet "1" *-- "many" PetTask : has
     Owner "1" *-- "1" Constraints : sets
     Owner ..> DailyPlan : builds
     DailyPlan ..> PetTask : schedules
