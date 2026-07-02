@@ -47,6 +47,9 @@ change relative to `main`.
 - Recurring tasks: `Scheduler.complete_task()` marks a task done and, for
   daily/weekly tasks, auto-schedules the next occurrence on the owning pet
   (tested for +1d, +7d, and one-off no-op; demoed in `main.py`).
+- Conflict detection: `Scheduler.detect_conflicts()` returns advisory warnings
+  for pending tasks sharing an exact date+time, across pets; reflection §2b
+  documents the exact-match-vs-overlap tradeoff.
 
 ### Changed
 

@@ -95,6 +95,15 @@ def main() -> None:
         f"auto-scheduled for {follow_up.date} at {time_str}"
     )
 
+    owner.get_pet("Whiskers").add_task(
+        Task("Medication", time(18, 30), date.today(), duration_minutes=5)
+    )
+    print(
+        "\nAdded 'Medication' for Whiskers at 18:30 (same time as Mochi's evening walk):"
+    )
+    for warning in scheduler.detect_conflicts():
+        print(f"  ⚠️  {warning}")
+
     # Demo rescheduling a task
     med_task = owner.get_pet("Whiskers").list_tasks()[2]
     print("\nRescheduling Whiskers' Medication from 18:30 to 19:30...")

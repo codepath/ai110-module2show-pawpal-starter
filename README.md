@@ -92,6 +92,9 @@ Still pending (filter_by_status)
 20:00  Whiskers (cat)  Litter box cleanup  [15 min, once, pending]
 
 Completed 'Morning walk' (daily) -> next occurrence auto-scheduled for tomorrow at 08:00
+
+Added 'Medication' for Whiskers at 18:30 (same time as Mochi's evening walk):
+  ⚠️  Conflict at 18:30 on today: Evening walk (Mochi) overlaps Medication (Whiskers)
 ```
 
 ## 🧪 Testing PawPal+
@@ -118,7 +121,7 @@ Sample test output:
 | ----------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------- |
 | Task sorting      | `Scheduler.sort_by_time()`                                  | Chronological "HH:MM" ordering across **all** pets                          |
 | Filtering         | `Scheduler.filter_by_status()`, `Scheduler.filter_by_pet()` | Narrow any view to pending/done tasks or a single pet                       |
-| Conflict handling |                                                             | _lands with `detect_conflicts()`_                                           |
+| Conflict handling | `Scheduler.detect_conflicts()`                              | Warns (never crashes) on identical date+time collisions, across pets        |
 | Recurring tasks   | `Scheduler.complete_task()`, `Task.next_occurrence()`       | Completing a daily/weekly task auto-schedules the next occurrence (+1d/+7d) |
 
 ## 📸 Demo Walkthrough

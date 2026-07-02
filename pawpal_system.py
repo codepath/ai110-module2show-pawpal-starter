@@ -119,8 +119,36 @@ class Scheduler:
         return [(pet, task) for pet, task in self.all_tasks() if pet.name == pet_name]
 
     def detect_conflicts(self) -> list[str]:
-        """Return human-readable warnings for same-time task collisions."""
-        ...
+        """Return human-readable warnings for overlapping pending tasks.
+
+        Two pending tasks conflict when their time blocks (start time plus
+        duration) overlap on the same date — one caretaker can't do both.
+        Back-to-back tasks (one ends exactly when the next starts) are fine.
+        Warnings are advisory strings; nothing is raised or blocked.
+        """
+        pending = [(pet, task) for pet, task in self.all_tasks() if not task.completed]
+        warnings = []
+        for i, (pet_a, task_a) in enumerate(pending):
+            for pet_b, task_b in pending[i + 1 :]:
+                if task_a.date != task_b.date:
+                    continue
+                start_a = _to_minutes(task_a.time)
+                start_b = _to_minutes(task_b.time)
+                if (
+                    start_a < start_b + task_b.duration_minutes
+                    and start_b < start_a + task_a.duration_minutes
+                ):
+                    time_str = (
+                        task_a.time.strftime("%H:%M")
+                        if isinstance(task_a.time, time)
+                        else task_a.time
+                    )
+                    warnings.append(
+                        f"Conflict at {time_str} on {task_a.date}: "
+                        f"{task_a.description} ({pet_a.name}) overlaps "
+                        f"{task_b.description} ({pet_b.name})"
+                    )
+        return warnings
 
     def complete_task(self, task: Task) -> Task | None:
         """Complete a task; if recurring, add and return its next occurrence."""

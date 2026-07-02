@@ -156,6 +156,54 @@ def test_completing_one_off_task_does_not_add_to_list():
     assert len(whiskers.list_tasks()) == 1
 
 
+def test_detect_conflicts_flags_same_time_tasks_across_pets():
+    owner = two_pet_household()
+    owner.get_pet("Whiskers").add_task(make_task("Medication", "08:00"))
+    warnings = Scheduler(owner).detect_conflicts()
+    assert len(warnings) == 1
+
+
+def test_detect_conflicts_warning_contains_time():
+    owner = two_pet_household()
+    owner.get_pet("Whiskers").add_task(make_task("Medication", "08:00"))
+    warnings = Scheduler(owner).detect_conflicts()
+    assert "08:00" in warnings[0]
+
+
+def test_detect_conflicts_warning_contains_first_pet_name():
+    owner = two_pet_household()
+    owner.get_pet("Whiskers").add_task(make_task("Medication", "08:00"))
+    warnings = Scheduler(owner).detect_conflicts()
+    assert "Mochi" in warnings[0]
+
+
+def test_detect_conflicts_warning_contains_second_pet_name():
+    owner = two_pet_household()
+    owner.get_pet("Whiskers").add_task(make_task("Medication", "08:00"))
+    warnings = Scheduler(owner).detect_conflicts()
+    assert "Whiskers" in warnings[0]
+
+
+def test_detect_conflicts_flags_overlapping_time_blocks():
+    owner = two_pet_household()
+    owner.get_pet("Whiskers").add_task(
+        make_task("Medication", "08:10", duration_minutes=15)
+    )
+    warnings = Scheduler(owner).detect_conflicts()
+    assert len(warnings) == 1
+
+
+def test_detect_conflicts_returns_empty_list_when_no_collisions():
+    assert Scheduler(two_pet_household()).detect_conflicts() == []
+
+
+def test_detect_conflicts_ignores_completed_tasks():
+    owner = two_pet_household()
+    owner.get_pet("Whiskers").add_task(make_task("Medication", "08:00"))
+    owner.get_pet("Mochi").list_tasks()[0].mark_complete()
+    assert Scheduler(owner).detect_conflicts() == []
+
+
 def test_tasks_for_today_excludes_future_days():
     from datetime import timedelta
 

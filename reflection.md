@@ -44,8 +44,11 @@ I decided what mattered most by walking through the day of the busy owner in the
 
 **b. Tradeoffs**
 
-- Describe one tradeoff your scheduler makes.
-- Why is that tradeoff reasonable for this scenario?
+`detect_conflicts()` uses interval overlap detection: two pending tasks conflict when their time blocks (start time through start + duration) overlap on the same date. Back-to-back tasks (one ends exactly when the next starts) are fine. The tradeoff:
+
+- Conflicts are **purely advisory** — returned as a list of warning strings, never raising exceptions or blocking scheduling. The system warns but doesn't prevent double-booking.
+- This design is deliberate: pet care tasks are flexible anchors, and the owner should decide whether to reschedule. A strict "reject conflicts" approach would make the scheduler rigid and frustrating.
+- The advisory model also simplifies testing — tests verify the warnings appear without needing to handle exception flows.
 
 ---
 
