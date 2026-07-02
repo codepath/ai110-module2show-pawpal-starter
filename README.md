@@ -105,6 +105,8 @@ Priority view (sort_by_priority: high first, then time)
 18:30  Mochi (dog)  Evening walk  [30 min, daily, medium, pending]
 18:30  Whiskers (cat)  Medication  [5 min, once, medium, pending]
 20:00  Whiskers (cat)  Litter box cleanup  [15 min, once, medium, pending]
+
+Next free 30-minute slot today (find_next_available_slot): 07:00
 ```
 
 ## 🧪 Testing PawPal+
@@ -127,13 +129,14 @@ Sample test output:
 
 > Fill in once you've implemented scheduling logic.
 
-| Feature                     | Method(s)                                                   | Notes                                                                         |
-| --------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| Task sorting                | `Scheduler.sort_by_time()`                                  | Chronological "HH:MM" ordering across **all** pets                            |
-| Filtering                   | `Scheduler.filter_by_status()`, `Scheduler.filter_by_pet()` | Narrow any view to pending/done tasks or a single pet                         |
-| Conflict handling           | `Scheduler.detect_conflicts()`                              | Warns (never crashes) on identical date+time collisions, across pets          |
-| Recurring tasks             | `Scheduler.complete_task()`, `Task.next_occurrence()`       | Completing a daily/weekly task auto-schedules the next occurrence (+1d/+7d)   |
-| Priority ordering (stretch) | `Scheduler.sort_by_priority()`                              | High > medium > low, ties broken chronologically; "Order by" toggle in the UI |
+| Feature                       | Method(s)                                                   | Notes                                                                             |
+| ----------------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Task sorting                  | `Scheduler.sort_by_time()`                                  | Chronological "HH:MM" ordering across **all** pets                                |
+| Filtering                     | `Scheduler.filter_by_status()`, `Scheduler.filter_by_pet()` | Narrow any view to pending/done tasks or a single pet                             |
+| Conflict handling             | `Scheduler.detect_conflicts()`                              | Warns (never crashes) on identical date+time collisions, across pets              |
+| Recurring tasks               | `Scheduler.complete_task()`, `Task.next_occurrence()`       | Completing a daily/weekly task auto-schedules the next occurrence (+1d/+7d)       |
+| Priority ordering (stretch)   | `Scheduler.sort_by_priority()`                              | High > medium > low, ties broken chronologically; "Order by" toggle in the UI     |
+| Next available slot (stretch) | `Scheduler.find_next_available_slot()`                      | Finds the earliest free block of a given duration within 07:00–21:00 waking hours |
 
 The "Priority view" block in [Sample Output](#%EF%B8%8F-sample-output) above is the captured CLI demonstration of the priority-based enhancement: the 16:00 high-priority vet appointment outranks every earlier medium-priority task.
 

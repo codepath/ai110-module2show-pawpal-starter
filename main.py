@@ -118,6 +118,9 @@ def main() -> None:
         scheduler.sort_by_priority(),
     )
 
+    slot = scheduler.find_next_available_slot(30)
+    print(f"\nNext free 30-minute slot today (find_next_available_slot): {slot}")
+
     # Demo rescheduling a task
     med_task = owner.get_pet("Whiskers").list_tasks()[2]
     print("\nRescheduling Whiskers' Medication from 18:30 to 19:30...")

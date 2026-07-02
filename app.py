@@ -126,6 +126,18 @@ if entries:
 else:
     st.info("Nothing scheduled yet.")
 
+# --- Find a free slot ------------------------------------------------------
+st.subheader("Find a free slot")
+slot_duration = st.number_input(
+    "How long (min)?", min_value=5, max_value=240, value=30, key="slot_duration"
+)
+if st.button("Find next available slot", key="find_slot"):
+    slot = scheduler.find_next_available_slot(int(slot_duration))
+    if slot is not None:
+        st.info(f"Next free {int(slot_duration)}-minute slot today: **{slot}**")
+    else:
+        st.info("No free slot that long remains today.")
+
 # --- Complete a task -------------------------------------------------------
 pending = scheduler.filter_by_status(completed=False)
 if pending:

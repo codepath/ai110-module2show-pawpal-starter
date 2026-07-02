@@ -29,6 +29,23 @@ RECURRENCE_DAYS = {Frequency.DAILY: 1, Frequency.WEEKLY: 7}
 # Sort rank per priority level (lower rank sorts first).
 PRIORITY_RANK = {Priority.HIGH: 0, Priority.MEDIUM: 1, Priority.LOW: 2}
 
+# Waking-day window scanned by find_next_available_slot.
+DAY_START = time(7, 0)
+DAY_END = time(21, 0)
+
+
+def _to_minutes(time_val: time | str) -> int:
+    """Convert a datetime.time or 'HH:MM' string to minutes since midnight."""
+    if isinstance(time_val, str):
+        hours, minutes = map(int, time_val.split(":"))
+        return hours * 60 + minutes
+    return time_val.hour * 60 + time_val.minute
+
+
+def _to_hhmm(minutes: int) -> str:
+    """Convert minutes since midnight to "HH:MM"."""
+    return f"{minutes // 60:02d}:{minutes % 60:02d}"
+
 
 @dataclass
 class Task:
@@ -170,6 +187,33 @@ class Scheduler:
                         f"{task_b.description} ({pet_b.name})"
                     )
         return warnings
+
+    def find_next_available_slot(
+        self, duration_minutes: int, day: date | None = None
+    ) -> str | None:
+        """Earliest "HH:MM" where a task of this length fits with no overlap.
+
+        Considers every pet's pending tasks on `day` (default today) as busy
+        blocks and scans the DAY_START–DAY_END waking window. Returns None if
+        no gap is large enough.
+        """
+        day = day or date.today()
+        busy = sorted(
+            (_to_minutes(task.time), _to_minutes(task.time) + task.duration_minutes)
+            for _pet, task in self.all_tasks()
+            if task.date == day and not task.completed
+        )
+        cursor = _to_minutes(DAY_START)
+        for start, end in busy:
+            limit = min(start, _to_minutes(DAY_END))
+            if limit - cursor >= duration_minutes:
+                return _to_hhmm(cursor)
+            cursor = max(cursor, end)
+            if cursor + duration_minutes > _to_minutes(DAY_END):
+                break
+        if _to_minutes(DAY_END) - cursor >= duration_minutes:
+            return _to_hhmm(cursor)
+        return None
 
     def complete_task(self, task: Task) -> Task | None:
         """Complete a task; if recurring, add and return its next occurrence."""

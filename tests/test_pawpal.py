@@ -171,6 +171,42 @@ def test_sort_by_priority_breaks_ties_by_time():
     assert times == [time(8, 0), time(9, 0)]
 
 
+def test_next_available_slot_on_empty_day_is_day_start():
+    owner = Owner(name="Jordan")
+    owner.add_pet(Pet(name="Mochi", species="dog"))
+    assert Scheduler(owner).find_next_available_slot(30) == "07:00"
+
+
+def test_next_available_slot_skips_busy_blocks_across_pets():
+    owner = two_pet_household()
+    # Mochi busy 07:00-09:00; Whiskers busy 09:30-10:00. First 30-min gap: 09:00.
+    owner.get_pet("Mochi").list_tasks()[0].time = "07:00"
+    owner.get_pet("Mochi").list_tasks()[0].duration_minutes = 120
+    owner.get_pet("Whiskers").list_tasks()[0].time = "09:30"
+    owner.get_pet("Whiskers").list_tasks()[0].duration_minutes = 30
+    assert Scheduler(owner).find_next_available_slot(30) == "09:00"
+
+
+def test_next_available_slot_returns_none_when_nothing_fits():
+    owner = two_pet_household()
+    owner.get_pet("Mochi").add_task(
+        make_task("Day-long sitter visit", "07:00", duration_minutes=840)
+    )
+    assert Scheduler(owner).find_next_available_slot(30) is None
+
+
+def test_next_available_slot_respects_day_end_boundary_with_late_task():
+    owner = Owner(name="Jordan")
+    owner.add_pet(Pet(name="Mochi", species="dog"))
+    owner.get_pet("Mochi").add_task(
+        make_task("Day-long sitter visit", "07:00", duration_minutes=825)
+    )
+    owner.get_pet("Mochi").add_task(
+        make_task("Late medication", "22:00", duration_minutes=15)
+    )
+    assert Scheduler(owner).find_next_available_slot(30) is None
+
+
 def test_detect_conflicts_flags_same_time_tasks_across_pets():
     owner = two_pet_household()
     owner.get_pet("Whiskers").add_task(make_task("Medication", "08:00"))

@@ -72,6 +72,13 @@ def test_order_by_priority_puts_high_priority_task_first(app: AppTest):
     assert list(table["Task"]) == ["Vet visit", "Morning walk"]
 
 
+def test_find_slot_reports_first_free_time(app: AppTest):
+    add_pet(app, "Rex")
+    add_task(app, "Rex", "Morning walk", datetime.time(7, 0))
+    app.button(key="find_slot").click().run()
+    assert "07:15" in app.info[0].value
+
+
 def test_completing_a_recurring_task_marks_it_complete(app: AppTest):
     add_pet(app, "Rex")
     app.selectbox(key="task_pet").select("Rex")
