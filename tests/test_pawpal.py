@@ -92,6 +92,70 @@ def test_filter_by_pet_returns_only_that_pets_tasks():
     ]
 
 
+def test_completing_daily_task_marks_original_completed():
+    owner = two_pet_household()
+    mochi = owner.get_pet("Mochi")
+    walk = mochi.list_tasks()[0]
+    walk.frequency = "daily"
+    Scheduler(owner).complete_task(walk)
+    assert walk.completed is True
+
+
+def test_completing_daily_task_schedules_new_task():
+    owner = two_pet_household()
+    mochi = owner.get_pet("Mochi")
+    walk = mochi.list_tasks()[0]
+    walk.frequency = "daily"
+    follow_up = Scheduler(owner).complete_task(walk)
+    assert follow_up in mochi.list_tasks()
+
+
+def test_completing_daily_task_schedules_for_tomorrow():
+    from datetime import timedelta
+
+    owner = two_pet_household()
+    mochi = owner.get_pet("Mochi")
+    walk = mochi.list_tasks()[0]
+    walk.frequency = "daily"
+    follow_up = Scheduler(owner).complete_task(walk)
+    assert follow_up.date == date.today() + timedelta(days=1)
+
+
+def test_completing_daily_task_schedules_as_incomplete():
+    owner = two_pet_household()
+    mochi = owner.get_pet("Mochi")
+    walk = mochi.list_tasks()[0]
+    walk.frequency = "daily"
+    follow_up = Scheduler(owner).complete_task(walk)
+    assert follow_up.completed is False
+
+
+def test_completing_weekly_task_schedules_it_next_week():
+    from datetime import timedelta
+
+    owner = two_pet_household()
+    whiskers = owner.get_pet("Whiskers")
+    bath = make_task("Bath", "11:00", frequency="weekly")
+    whiskers.add_task(bath)
+    follow_up = Scheduler(owner).complete_task(bath)
+    assert follow_up.date == date.today() + timedelta(days=7)
+
+
+def test_completing_one_off_task_returns_no_follow_up():
+    owner = two_pet_household()
+    whiskers = owner.get_pet("Whiskers")
+    feeding = whiskers.list_tasks()[0]
+    assert Scheduler(owner).complete_task(feeding) is None
+
+
+def test_completing_one_off_task_does_not_add_to_list():
+    owner = two_pet_household()
+    whiskers = owner.get_pet("Whiskers")
+    feeding = whiskers.list_tasks()[0]
+    Scheduler(owner).complete_task(feeding)
+    assert len(whiskers.list_tasks()) == 1
+
+
 def test_tasks_for_today_excludes_future_days():
     from datetime import timedelta
 

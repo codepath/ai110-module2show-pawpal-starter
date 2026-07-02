@@ -124,4 +124,14 @@ class Scheduler:
 
     def complete_task(self, task: Task) -> Task | None:
         """Complete a task; if recurring, add and return its next occurrence."""
-        ...
+        task.mark_complete()
+        follow_up = task.next_occurrence()
+        if follow_up is None:
+            return None
+        owning_pet = next((pet for pet in self.owner.pets if task in pet.tasks), None)
+        if (
+            owning_pet is None
+        ):  # task detached from this household; nothing to reschedule
+            return None
+        owning_pet.add_task(follow_up)
+        return follow_up

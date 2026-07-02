@@ -44,6 +44,9 @@ change relative to `main`.
 - Algorithms: `Scheduler.sort_by_time()`, `filter_by_status()`, and
   `filter_by_pet()` with cross-pet tests; demo shows sorted and filtered
   views and the README Smarter Scheduling table names the methods.
+- Recurring tasks: `Scheduler.complete_task()` marks a task done and, for
+  daily/weekly tasks, auto-schedules the next occurrence on the owning pet
+  (tested for +1d, +7d, and one-off no-op; demoed in `main.py`).
 
 ### Changed
 

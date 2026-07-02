@@ -83,6 +83,18 @@ def main() -> None:
         "Still pending (filter_by_status)", scheduler.filter_by_status(completed=False)
     )
 
+    walk = owner.get_pet("Mochi").list_tasks()[0]
+    follow_up = scheduler.complete_task(walk)
+    time_str = (
+        follow_up.time.strftime("%H:%M")
+        if isinstance(follow_up.time, time)
+        else follow_up.time
+    )
+    print(
+        f"\nCompleted '{walk.description}' (daily) -> next occurrence "
+        f"auto-scheduled for {follow_up.date} at {time_str}"
+    )
+
     # Demo rescheduling a task
     med_task = owner.get_pet("Whiskers").list_tasks()[2]
     print("\nRescheduling Whiskers' Medication from 18:30 to 19:30...")

@@ -90,6 +90,8 @@ Still pending (filter_by_status)
 08:00  Mochi (dog)  Morning walk  [30 min, daily, pending]
 18:30  Mochi (dog)  Evening walk  [30 min, daily, pending]
 20:00  Whiskers (cat)  Litter box cleanup  [15 min, once, pending]
+
+Completed 'Morning walk' (daily) -> next occurrence auto-scheduled for tomorrow at 08:00
 ```
 
 ## 🧪 Testing PawPal+
@@ -112,12 +114,12 @@ Sample test output:
 
 > Fill in once you've implemented scheduling logic.
 
-| Feature           | Method(s)                                                   | Notes                                                 |
-| ----------------- | ----------------------------------------------------------- | ----------------------------------------------------- |
-| Task sorting      | `Scheduler.sort_by_time()`                                  | Chronological "HH:MM" ordering across **all** pets    |
-| Filtering         | `Scheduler.filter_by_status()`, `Scheduler.filter_by_pet()` | Narrow any view to pending/done tasks or a single pet |
-| Conflict handling |                                                             | _lands with `detect_conflicts()`_                     |
-| Recurring tasks   |                                                             | _lands with `complete_task()` recurrence_             |
+| Feature           | Method(s)                                                   | Notes                                                                       |
+| ----------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Task sorting      | `Scheduler.sort_by_time()`                                  | Chronological "HH:MM" ordering across **all** pets                          |
+| Filtering         | `Scheduler.filter_by_status()`, `Scheduler.filter_by_pet()` | Narrow any view to pending/done tasks or a single pet                       |
+| Conflict handling |                                                             | _lands with `detect_conflicts()`_                                           |
+| Recurring tasks   | `Scheduler.complete_task()`, `Task.next_occurrence()`       | Completing a daily/weekly task auto-schedules the next occurrence (+1d/+7d) |
 
 ## 📸 Demo Walkthrough
 
