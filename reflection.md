@@ -21,8 +21,10 @@ I asked Claude to draft the Mermaid diagram from this brainstorm and reviewed it
 
 **b. Design changes**
 
-- Did your design change during implementation?
-- If yes, describe at least one change and why you made it.
+Yes. Two key design decisions emerged during implementation:
+
+1. **Scheduler methods return `(pet, task)` pairs instead of bare tasks.** A cross-pet schedule needs pet context for every row — a `Task` has no back-reference to its `Pet`. Returning pairs keeps `Task` simple (no circular references) while making every schedule view, filter, and conflict message pet-aware.
+2. **Recurrence is split between `Task` and `Scheduler`.** `Task.next_occurrence()` handles pure "what would the follow-up be" logic, while `Scheduler.complete_task()` handles adding that follow-up to the right pet's task list — keeping concerns separated.
 
 ---
 

@@ -25,6 +25,9 @@ change relative to `main`.
 - UML class diagram draft (`diagrams/uml.mmd`): Task, Pet, Owner, Scheduler
   with attributes, methods, and relationships; reflection §1a documents the
   three core user actions and class responsibilities.
+- `pawpal_system.py` class skeletons translated 1:1 from the UML (dataclasses,
+  typed signatures, docstring stubs); reflection §1b records the design changes
+  from the AI skeleton review.
 
 ### Changed
 
