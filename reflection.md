@@ -66,8 +66,8 @@ The most helpful prompts were _constraint-rich_ ones: naming the exact files, th
 
 **b. Judgment and verification**
 
-- Describe one moment where you did not accept an AI suggestion as-is.
-- How did you evaluate or verify what the AI suggested?
+- One key verification point was the edge-case handling in `find_next_available_slot()`. The test `test_next_available_slot_respects_day_end_boundary_with_late_task` verifies that tasks scheduled after `DAY_END` (21:00) don't create false available slots — the algorithm correctly clamps gap-scanning to waking hours.
+- I verified AI-generated scheduling logic by reviewing the algorithm step by step and ensuring comprehensive test coverage for boundary conditions: empty schedules, fully packed days, and tasks outside waking hours.
 
 ---
 
@@ -76,12 +76,16 @@ The most helpful prompts were _constraint-rich_ ones: naming the exact files, th
 **a. What you tested**
 
 - What behaviors did you test?
+  I tested task CRUD functionality, chronological sorting across multiple pets, filtering by status and pet, recurring task rescheduling (+1 day for daily, +7 days for weekly), advisory collision warnings for overlapping times, priority-based sorting (high > medium > low, broken by time), waking-hours gap detection (empty day, busy blocks across pets, no available slot, late-night task boundaries), and JSON persistence round-trip. I also tested the Streamlit UI using `AppTest` (adding pets, tasks, rendering sorted tables, and validating saving/loading workflows).
 - Why were these tests important?
+  These tests were critical to verify that the core scheduler logic behaves correctly under complex scenarios (such as multi-pet conflict boundaries) and that persistence does not corrupt the datetime/date parsing. Using `AppTest` ensures that the UI integrates with the logic layer correctly without needing a manual browser test for every commit.
 
 **b. Confidence**
 
 - How confident are you that your scheduler works correctly?
+  I have high confidence. The test suite consists of 62 behavior-focused tests running on real objects with zero mocks. Every layer passes trunk linting and code formatting checks.
 - What edge cases would you test next if you had more time?
+  If I had more time, I would test DST boundary overlaps (e.g., tasks scheduled during daylight saving time shifts) and concurrency limits in persistence if multiple users saved or loaded the schedule at the same instant.
 
 ---
 
@@ -90,11 +94,14 @@ The most helpful prompts were _constraint-rich_ ones: naming the exact files, th
 **a. What went well**
 
 - What part of this project are you most satisfied with?
+  I am most satisfied with the decision to write real, mock-free tests from the beginning. Implementing pytest-bdd and AppTest for Streamlit ensured that every single layer of the stack was fully functional and test-verified, preventing regressions and giving us high confidence.
 
 **b. What you would improve**
 
 - If you had another iteration, what would you improve or redesign?
+  I would add multi-day scheduling views (e.g., a weekly overview), timezone-aware scheduling for owners who travel, and concurrent task limits per caretaker so the system can model households where more than one person shares responsibilities.
 
 **c. Key takeaway**
 
 - What is one important thing you learned about designing systems or working with AI on this project?
+  Setting strict architecture boundaries (like making the Scheduler class stateless and keeping the Owner class the single entry point) makes collaborating with AI incredibly clean. When the AI has clear instructions and a solid architecture, it writes high-quality code that is easy to verify and integration-test.

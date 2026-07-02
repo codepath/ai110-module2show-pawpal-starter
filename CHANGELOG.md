@@ -8,6 +8,8 @@ change relative to `main`.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-07-02
+
 ### Added
 
 - Implementation plan (`docs/plan.md`), task checklist (`docs/tasks.md`), agent

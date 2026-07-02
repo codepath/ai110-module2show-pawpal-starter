@@ -148,10 +148,10 @@
 
 ### PR 22 `docs-final-polish`
 
-- [ ] `uml.mmd` matches final code; copy → `uml_final.mmd`
-- [ ] README: Features list, Demo Walkthrough steps, Testing (cmd, coverage summary, captured output, confidence ★)
-- [ ] reflection: §3b, §4a, §4b, §5a, §5b, §5c ALL answered
-- [ ] CHANGELOG release entry
+- [x] `uml.mmd` matches final code; copy → `uml_final.mmd`
+- [x] README: Features list, Demo Walkthrough steps, Testing (cmd, coverage summary, captured output, confidence ★)
+- [x] reflection: §3b, §4a, §4b, §5a, §5b, §5c ALL answered
+- [x] CHANGELOG release entry
 
 ### PR 23 `docs-rubric-audit`
 
