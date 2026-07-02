@@ -27,6 +27,10 @@ lint:
     - prettier@3.9.4
     - ruff@0.15.20
     - trufflehog@3.95.7
+  ignore:
+    # pytest tests are built on assert; bandit B101 is noise there.
+    - linters: [bandit]
+      paths: [tests/**]
 actions:
   disabled:
     - trunk-announce

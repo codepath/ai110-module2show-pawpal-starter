@@ -28,6 +28,9 @@ change relative to `main`.
 - `pawpal_system.py` class skeletons translated 1:1 from the UML (dataclasses,
   typed signatures, docstring stubs); reflection §1b records the design changes
   from the AI skeleton review.
+- Test framework: pytest-bdd dev dependency, `tests/` layout (features,
+  step_defs, shared real-object fixtures) and the no-mocks e2e testing policy
+  (ADR-0004).
 
 ### Changed
 

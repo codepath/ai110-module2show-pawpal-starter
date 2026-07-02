@@ -4,11 +4,12 @@ Significant tool and design decisions for PawPal+, recorded as [MADR](https://ad
 
 ## Index
 
-| ID                               | Title                                                  | Status   | PR                   |
-| -------------------------------- | ------------------------------------------------------ | -------- | -------------------- |
-| [ADR-0001](0001-use-uv.md)       | Use uv for dependency and environment management       | accepted | `chore-uv-migration` |
-| [ADR-0002](0002-use-trunk-io.md) | Use trunk.io as meta-linter and git-hook manager       | accepted | `chore-trunk-io`     |
-| [ADR-0003](0003-ci-pipeline.md)  | CI pipeline: pytest + Trunk Check, stack-safe triggers | accepted | `ci-github-actions`  |
+| ID                                      | Title                                                       | Status   | PR                   |
+| --------------------------------------- | ----------------------------------------------------------- | -------- | -------------------- |
+| [ADR-0001](0001-use-uv.md)              | Use uv for dependency and environment management            | accepted | `chore-uv-migration` |
+| [ADR-0002](0002-use-trunk-io.md)        | Use trunk.io as meta-linter and git-hook manager            | accepted | `chore-trunk-io`     |
+| [ADR-0003](0003-ci-pipeline.md)         | CI pipeline: pytest + Trunk Check, stack-safe triggers      | accepted | `ci-github-actions`  |
+| [ADR-0004](0004-pytest-bdd-real-e2e.md) | pytest-bdd behavior specs; real objects + AppTest, no mocks | accepted | `test-bdd-framework` |
 
 ## Workflow
 
