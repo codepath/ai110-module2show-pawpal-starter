@@ -56,8 +56,13 @@ I decided what mattered most by walking through the day of the busy owner in the
 
 **a. How you used AI**
 
-- How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
-- What kinds of prompts or questions were most helpful?
+I used Claude (Claude Code) as the executing engineer while I stayed the architect and reviewer:
+
+- **Design brainstorming** — turning my brainstormed attributes/methods into the Mermaid UML, then reviewing the skeletons against it (see §1b for what that review changed).
+- **Test-first implementation** — for every layer I had the AI write the failing behavior tests first, we confirmed they failed, then implemented to green. This kept "AI wrote plausible code" from ever being the acceptance bar.
+- **Streamlit state investigation** — before wiring the UI I asked how `st.session_state` should hold my `Owner` so it survives reruns; the pattern we landed on (create once behind an `if "owner" not in st.session_state` guard, then always read from the vault) is exactly what `app.py` does.
+
+The most helpful prompts were _constraint-rich_ ones: naming the exact files, the rule set (no mocks, one behavior per test, gt/uv only), and the acceptance evidence I expected. Vague prompts produced generic code I had to redo.
 
 **b. Judgment and verification**
 

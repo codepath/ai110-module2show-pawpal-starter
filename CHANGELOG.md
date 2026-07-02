@@ -50,6 +50,10 @@ change relative to `main`.
 - Conflict detection: `Scheduler.detect_conflicts()` returns advisory warnings
   for pending tasks sharing an exact date+time, across pets; reflection §2b
   documents the exact-match-vs-overlap tradeoff.
+- Streamlit UI wired to the logic layer: session-state `Owner`, add-pet and
+  add-task forms calling real methods, sorted schedule table with status
+  filter, conflict warnings via `st.warning`, and task completion with
+  recurring reschedule feedback — covered by five AppTest end-to-end tests.
 
 ### Changed
 
