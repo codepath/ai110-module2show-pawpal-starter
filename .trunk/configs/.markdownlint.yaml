@@ -1,0 +1,10 @@
+# Prettier friendly markdownlint config (all formatting rules disabled)
+extends: markdownlint/style/prettier
+
+# The course starter templates (reflection.md) use bold pseudo-headings by design;
+# keep their structure intact for graders.
+MD036: false
+
+# Allow collapsible sections in README.
+MD033:
+  allowed_elements: [details, summary]

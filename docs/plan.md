@@ -8,7 +8,7 @@
 
 ## Why this plan looks the way it does (module 1 post-mortem)
 
-Module 1 scored 18/18 required but **2/10 stretch**. Every lost point was the same failure mode: *work done or half-done, but the rubric-specified evidence artifact missing at submission* — an empty Model Comparison table, a missing README UI section, `logic_utils.py` left as `NotImplementedError` stubs, unmerged `fix-bug-*` branches. Infrastructure outran the deliverable.
+Module 1 scored 18/18 required but **2/10 stretch**. Every lost point was the same failure mode: _work done or half-done, but the rubric-specified evidence artifact missing at submission_ — an empty Model Comparison table, a missing README UI section, `logic_utils.py` left as `NotImplementedError` stubs, unmerged `fix-bug-*` branches. Infrastructure outran the deliverable.
 
 This plan prevents that structurally:
 
@@ -41,32 +41,32 @@ This plan prevents that structurally:
 
 ## Rubric → PR map
 
-| Rubric item | Pts | Delivered by |
-|---|---|---|
-| UML: 4 classes, .mmd source | 1 | PR 7 (draft), PR 22 (final) |
-| UML: attributes + methods per class | 1 | PR 7, PR 22 |
-| UML: relationships (Owner→Pet→Task) | 1 | PR 7, PR 22 |
-| UML: readable, matches final code | 1 | PR 22 |
-| Task class complete + `mark_complete` | 1 | PR 10 |
-| Pet class + task management | 1 | PR 10 |
-| Owner class + pets management | 1 | PR 10 |
-| Scheduler works across multiple pets | 1 | PR 11 |
-| ≥2 algorithmic features | 1 | PRs 13–15 |
-| Features correct + reproducible | 1 | PRs 13–15 (tests) |
-| Features operate across multiple pets | 1 | PRs 13–15 (tests assert cross-pet) |
-| main.py: owner, 2 pets, 3+ tasks | 1 | PR 12 |
-| main.py uses Scheduler algorithm | 1 | PR 13 |
-| Readable output + pasted in README | 1 | PR 12 (refreshed 13–15, 20) |
-| Test file exists, ≥1 passing test | 1 | PR 10 |
-| ≥2 meaningful passing tests | 2 | PRs 10–15 |
-| README: system, classes, algorithms | 1 | PRs 12–15, 22 |
-| README: run/test instructions, pytest cmd, coverage summary, passing output block | 1 | PR 22 |
-| Reflection: AI influence, accepted/rejected, verification | 1 | PRs 7–16 in-layer, verified PR 22 |
-| SF: 3rd algorithm + Agent Workflow section | +2 | PR 18 |
-| SF: JSON persistence + README workflow | +2 | PR 19 |
-| SF: advanced scheduling + README CLI output | +2 | PR 17 |
-| SF: output formatting + README docs | +2 | PR 20 |
-| SF: model/prompt comparison in ai_interactions.md | +2 | PR 21 |
+| Rubric item                                                                       | Pts | Delivered by                       |
+| --------------------------------------------------------------------------------- | --- | ---------------------------------- |
+| UML: 4 classes, .mmd source                                                       | 1   | PR 7 (draft), PR 22 (final)        |
+| UML: attributes + methods per class                                               | 1   | PR 7, PR 22                        |
+| UML: relationships (Owner→Pet→Task)                                               | 1   | PR 7, PR 22                        |
+| UML: readable, matches final code                                                 | 1   | PR 22                              |
+| Task class complete + `mark_complete`                                             | 1   | PR 10                              |
+| Pet class + task management                                                       | 1   | PR 10                              |
+| Owner class + pets management                                                     | 1   | PR 10                              |
+| Scheduler works across multiple pets                                              | 1   | PR 11                              |
+| ≥2 algorithmic features                                                           | 1   | PRs 13–15                          |
+| Features correct + reproducible                                                   | 1   | PRs 13–15 (tests)                  |
+| Features operate across multiple pets                                             | 1   | PRs 13–15 (tests assert cross-pet) |
+| main.py: owner, 2 pets, 3+ tasks                                                  | 1   | PR 12                              |
+| main.py uses Scheduler algorithm                                                  | 1   | PR 13                              |
+| Readable output + pasted in README                                                | 1   | PR 12 (refreshed 13–15, 20)        |
+| Test file exists, ≥1 passing test                                                 | 1   | PR 10                              |
+| ≥2 meaningful passing tests                                                       | 2   | PRs 10–15                          |
+| README: system, classes, algorithms                                               | 1   | PRs 12–15, 22                      |
+| README: run/test instructions, pytest cmd, coverage summary, passing output block | 1   | PR 22                              |
+| Reflection: AI influence, accepted/rejected, verification                         | 1   | PRs 7–16 in-layer, verified PR 22  |
+| SF: 3rd algorithm + Agent Workflow section                                        | +2  | PR 18                              |
+| SF: JSON persistence + README workflow                                            | +2  | PR 19                              |
+| SF: advanced scheduling + README CLI output                                       | +2  | PR 17                              |
+| SF: output formatting + README docs                                               | +2  | PR 20                              |
+| SF: model/prompt comparison in ai_interactions.md                                 | +2  | PR 21                              |
 
 ## The stack
 
@@ -134,19 +134,19 @@ Red→green inside each layer: failing test first, then code.
 
 ## Pitfall register (module 1 → prevention here)
 
-| Module 1 pitfall | Prevention |
-|---|---|
-| Refactor/stubs deferred forever | No deferral rule; releasable-layer rule; PR 23 audit gate |
-| Empty reflection/ai_interactions sections at submission | Docs-in-layer DoD per PR; PR 22 sweeps every prompt |
-| README output hand-written, overstated reality | Captured-output-only rule; subprocess CLI test keeps it honest |
-| CI skipped mid-stack PRs | Unfiltered `pull_request` trigger (PR 5) |
-| git/python used instead of gt/uv | AGENTS.md rules 1–2; every command in this plan is written gt/uv-first |
-| Wrong voice / fabricated prompts in logs | User's-voice rule; quote real prompts only |
-| CHANGELOG logging intra-stack churn | Entries scoped vs main only |
-| Scratch files committed | Scratchpad only; trunk + review check |
-| Stack layers mixing concerns | One concern per PR as specced; `gt absorb` for fixups |
-| Plan gutted in a "final pass" | Plan is committed and versioned; changes go through PRs |
-| Submitted late | Required core (PRs 1–16) targeted ≥48h before deadline; stretch is droppable |
+| Module 1 pitfall                                        | Prevention                                                                   |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Refactor/stubs deferred forever                         | No deferral rule; releasable-layer rule; PR 23 audit gate                    |
+| Empty reflection/ai_interactions sections at submission | Docs-in-layer DoD per PR; PR 22 sweeps every prompt                          |
+| README output hand-written, overstated reality          | Captured-output-only rule; subprocess CLI test keeps it honest               |
+| CI skipped mid-stack PRs                                | Unfiltered `pull_request` trigger (PR 5)                                     |
+| git/python used instead of gt/uv                        | AGENTS.md rules 1–2; every command in this plan is written gt/uv-first       |
+| Wrong voice / fabricated prompts in logs                | User's-voice rule; quote real prompts only                                   |
+| CHANGELOG logging intra-stack churn                     | Entries scoped vs main only                                                  |
+| Scratch files committed                                 | Scratchpad only; trunk + review check                                        |
+| Stack layers mixing concerns                            | One concern per PR as specced; `gt absorb` for fixups                        |
+| Plan gutted in a "final pass"                           | Plan is committed and versioned; changes go through PRs                      |
+| Submitted late                                          | Required core (PRs 1–16) targeted ≥48h before deadline; stretch is droppable |
 
 ## Execution loop (per PR)
 

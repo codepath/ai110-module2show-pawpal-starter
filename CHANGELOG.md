@@ -15,6 +15,8 @@ change relative to `main`.
   (`docs/decisions/`).
 - uv project setup: `pyproject.toml` (streamlit runtime dep; pytest + pytest-cov
   in the dev group), `uv.lock`, and pytest configuration (ADR-0001).
+- trunk.io meta-linter config (`.trunk/`) with pre-commit format and pre-push
+  check hooks enabled; repo-wide lint pass now clean (ADR-0002).
 
 ### Changed
 

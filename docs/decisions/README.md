@@ -4,9 +4,10 @@ Significant tool and design decisions for PawPal+, recorded as [MADR](https://ad
 
 ## Index
 
-| ID | Title | Status | PR |
-|----|-------|--------|----|
+| ID                         | Title                                            | Status   | PR                   |
+| -------------------------- | ------------------------------------------------ | -------- | -------------------- |
 | [ADR-0001](0001-use-uv.md) | Use uv for dependency and environment management | accepted | `chore-uv-migration` |
+| [ADR-0002](0002-use-trunk-io.md) | Use trunk.io as meta-linter and git-hook manager | accepted | `chore-trunk-io` |
 
 ## Workflow
 
