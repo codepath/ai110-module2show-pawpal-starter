@@ -63,6 +63,10 @@ change relative to `main`.
   blocks in a 07:00–21:00 window; "Find a free slot" UI section, demo line,
   and the ai_interactions.md Agent Workflow write-up.
 - JSON Persistence (stretch): `save_to_json()` and `load_from_json()` using stdlib json to save and restore household data; CLI demo, sidebar controls in the UI, and full unit/UI test coverage.
+- Output formatting (stretch): `tabulate` library for aligned CLI tables,
+  activity-type emojis (🦮 walks, 🥣 feeding, 💊 meds, 🩺 vet, 🐱 litter),
+  and ✅/⏳ status icons; README documents the library, functions, and emoji
+  mapping; sample output refreshed from real run.
 
 ### Changed
 

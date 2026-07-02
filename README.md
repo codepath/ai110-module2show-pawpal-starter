@@ -67,29 +67,33 @@ Captured from a real run of `uv run python main.py`:
 PawPal+ demo — household of Jordan: Mochi the dog, Whiskers the cat
 
 Today's Schedule (as entered)
------------------------------
-08:00  Mochi (dog)  Morning walk  [30 min, daily, medium, pending]
-18:30  Mochi (dog)  Evening walk  [30 min, daily, medium, pending]
-09:00  Whiskers (cat)  Feeding  [10 min, daily, medium, pending]
-20:00  Whiskers (cat)  Litter box cleanup  [15 min, once, medium, pending]
+Time    Pet       Species    Task / Activity       Duration    Repeats    Priority    Status
+------  --------  ---------  --------------------  ----------  ---------  ----------  ---------
+08:00   Mochi     dog        🦮 Morning walk        30 min      daily      medium      ⏳ pending
+18:30   Mochi     dog        🦮 Evening walk        30 min      daily      medium      ⏳ pending
+09:00   Whiskers  cat        🥣 Feeding             10 min      daily      medium      ⏳ pending
+20:00   Whiskers  cat        🐱 Litter box cleanup  15 min      once       medium      ⏳ pending
 
 Today's Schedule (sorted by time)
----------------------------------
-08:00  Mochi (dog)  Morning walk  [30 min, daily, medium, pending]
-09:00  Whiskers (cat)  Feeding  [10 min, daily, medium, pending]
-18:30  Mochi (dog)  Evening walk  [30 min, daily, medium, pending]
-20:00  Whiskers (cat)  Litter box cleanup  [15 min, once, medium, pending]
+Time    Pet       Species    Task / Activity       Duration    Repeats    Priority    Status
+------  --------  ---------  --------------------  ----------  ---------  ----------  ---------
+08:00   Mochi     dog        🦮 Morning walk        30 min      daily      medium      ⏳ pending
+09:00   Whiskers  cat        🥣 Feeding             10 min      daily      medium      ⏳ pending
+18:30   Mochi     dog        🦮 Evening walk        30 min      daily      medium      ⏳ pending
+20:00   Whiskers  cat        🐱 Litter box cleanup  15 min      once       medium      ⏳ pending
 
 Mochi only (filter_by_pet)
---------------------------
-08:00  Mochi (dog)  Morning walk  [30 min, daily, medium, pending]
-18:30  Mochi (dog)  Evening walk  [30 min, daily, medium, pending]
+Time    Pet    Species    Task / Activity    Duration    Repeats    Priority    Status
+------  -----  ---------  -----------------  ----------  ---------  ----------  ---------
+08:00   Mochi  dog        🦮 Morning walk     30 min      daily      medium      ⏳ pending
+18:30   Mochi  dog        🦮 Evening walk     30 min      daily      medium      ⏳ pending
 
 Still pending (filter_by_status)
---------------------------------
-08:00  Mochi (dog)  Morning walk  [30 min, daily, medium, pending]
-18:30  Mochi (dog)  Evening walk  [30 min, daily, medium, pending]
-20:00  Whiskers (cat)  Litter box cleanup  [15 min, once, medium, pending]
+Time    Pet       Species    Task / Activity       Duration    Repeats    Priority    Status
+------  --------  ---------  --------------------  ----------  ---------  ----------  ---------
+08:00   Mochi     dog        🦮 Morning walk        30 min      daily      medium      ⏳ pending
+18:30   Mochi     dog        🦮 Evening walk        30 min      daily      medium      ⏳ pending
+20:00   Whiskers  cat        🐱 Litter box cleanup  15 min      once       medium      ⏳ pending
 
 Completed 'Morning walk' (daily) -> next occurrence auto-scheduled for tomorrow at 08:00
 
@@ -97,17 +101,50 @@ Added 'Medication' for Whiskers at 18:30 (same time as Mochi's evening walk):
   ⚠️  Conflict at 18:30 on today: Evening walk (Mochi) overlaps Medication (Whiskers)
 
 Priority view (sort_by_priority: high first, then time)
--------------------------------------------------------
-16:00  Mochi (dog)  Vet appointment  [45 min, once, high, pending]
-08:00  Mochi (dog)  Morning walk  [30 min, daily, medium, done]
-08:00  Mochi (dog)  Morning walk  [30 min, daily, medium, pending]
-09:00  Whiskers (cat)  Feeding  [10 min, daily, medium, done]
-18:30  Mochi (dog)  Evening walk  [30 min, daily, medium, pending]
-18:30  Whiskers (cat)  Medication  [5 min, once, medium, pending]
-20:00  Whiskers (cat)  Litter box cleanup  [15 min, once, medium, pending]
+Time    Pet       Species    Task / Activity       Duration    Repeats    Priority    Status
+------  --------  ---------  --------------------  ----------  ---------  ----------  ---------
+16:00   Mochi     dog        🩺 Vet appointment     45 min      once       high        ⏳ pending
+08:00   Mochi     dog        🦮 Morning walk        30 min      daily      medium      ✅ done
+08:00   Mochi     dog        🦮 Morning walk        30 min      daily      medium      ⏳ pending
+09:00   Whiskers  cat        🥣 Feeding             10 min      daily      medium      ✅ done
+18:30   Mochi     dog        🦮 Evening walk        30 min      daily      medium      ⏳ pending
+18:30   Whiskers  cat        💊 Medication          5 min       once       medium      ⏳ pending
+20:00   Whiskers  cat        🐱 Litter box cleanup  15 min      once       medium      ⏳ pending
 
 Next free 30-minute slot today (find_next_available_slot): 07:00
+
+Rescheduling Whiskers' Medication from 18:30 to 19:30...
+Rescheduled successfully. New time: 19:30 on today.
+
+Saving data to data.json...
+Loading data back from data.json...
+Loaded Owner: Jordan
+
+Loaded Household Schedule
+Time    Pet       Species    Task / Activity       Duration    Repeats    Priority    Status
+------  --------  ---------  --------------------  ----------  ---------  ----------  ---------
+08:00   Mochi     dog        🦮 Morning walk        30 min      daily      medium      ✅ done
+18:30   Mochi     dog        🦮 Evening walk        30 min      daily      medium      ⏳ pending
+08:00   Mochi     dog        🦮 Morning walk        30 min      daily      medium      ⏳ pending
+16:00   Mochi     dog        🩺 Vet appointment     45 min      once       high        ⏳ pending
+09:00   Whiskers  cat        🥣 Feeding             10 min      daily      medium      ✅ done
+20:00   Whiskers  cat        🐱 Litter box cleanup  15 min      once       medium      ⏳ pending
+19:30   Whiskers  cat        💊 Medication          5 min       once       medium      ⏳ pending
 ```
+
+## 🎨 Output Formatting
+
+The CLI output uses professional tabular formatting with the following configuration:
+
+- **Library**: `tabulate` (version `0.10.0`) is used to construct cleanly aligned columns for task schedules.
+- **Status Indicators**: Uses emojis (`✅ done` vs `⏳ pending`) to mark task completion status.
+- **Activity Emojis**: Automatically assigns relevant emojis based on task descriptions:
+  - `🦮` for walks
+  - `🥣` for feedings/meals
+  - `💊` for medication/pills
+  - `🩺` for vet appointments
+  - `🐱` for litter box cleanups
+  - `📋` for all other care activities
 
 ## 🧪 Testing PawPal+
 

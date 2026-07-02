@@ -52,17 +52,59 @@ def build_demo_household() -> Owner:
 
 
 def print_schedule(title: str, entries: list) -> None:
-    """Print (pet, task) pairs as one aligned line each."""
+    """Print (pet, task) pairs as a beautiful tabulate table with emojis."""
+    from tabulate import tabulate
+
     print(f"\n{title}")
-    print("-" * len(title))
     if not entries:
         print("(nothing scheduled)")
+        return
+
+    table_data = []
     for pet, task in entries:
-        status = "done" if task.completed else "pending"
-        print(
-            f"{task.time}  {pet.name} ({pet.species})  {task.description}"
-            f"  [{task.duration_minutes} min, {task.frequency}, {task.priority}, {status}]"
+        desc_lower = task.description.lower()
+        if "walk" in desc_lower:
+            emoji = "🦮"
+        elif "feed" in desc_lower or "meal" in desc_lower:
+            emoji = "🥣"
+        elif "med" in desc_lower or "pill" in desc_lower:
+            emoji = "💊"
+        elif "vet" in desc_lower:
+            emoji = "🩺"
+        elif "litter" in desc_lower:
+            emoji = "🐱"
+        else:
+            emoji = "📋"
+
+        status_icon = "✅ done" if task.completed else "⏳ pending"
+        time_str = (
+            task.time.strftime("%H:%M") if isinstance(task.time, time) else task.time
         )
+
+        table_data.append(
+            [
+                time_str,
+                pet.name,
+                pet.species,
+                f"{emoji} {task.description}",
+                f"{task.duration_minutes} min",
+                task.frequency,
+                task.priority,
+                status_icon,
+            ]
+        )
+
+    headers = [
+        "Time",
+        "Pet",
+        "Species",
+        "Task / Activity",
+        "Duration",
+        "Repeats",
+        "Priority",
+        "Status",
+    ]
+    print(tabulate(table_data, headers=headers, tablefmt="simple"))
 
 
 def main() -> None:

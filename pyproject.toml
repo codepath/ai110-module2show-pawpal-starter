@@ -4,6 +4,7 @@ version = "0.1.0"
 requires-python = ">=3.14"
 dependencies = [
     "streamlit>=1.30",
+    "tabulate>=0.10.0",
 ]
 
 [dependency-groups]

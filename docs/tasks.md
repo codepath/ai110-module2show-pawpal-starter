@@ -136,8 +136,8 @@
 
 ### PR 20 `feat-output-formatting` (+2)
 
-- [ ] `uv add tabulate`; tabulate table + type emojis + status marks
-- [ ] README formatting docs (functions + libraries) + refreshed captured output
+- [x] `uv add tabulate`; tabulate table + type emojis + status marks
+- [x] README formatting docs (functions + libraries) + refreshed captured output
 
 ### PR 21 `docs-model-comparison` (+2)
 
