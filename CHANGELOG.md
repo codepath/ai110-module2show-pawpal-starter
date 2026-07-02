@@ -31,6 +31,10 @@ change relative to `main`.
 - Test framework: pytest-bdd dev dependency, `tests/` layout (features,
   step_defs, shared real-object fixtures) and the no-mocks e2e testing policy
   (ADR-0004).
+- Working `Task` (completion + recurrence-aware `next_occurrence`), `Pet`
+  (add/list/pending tasks), and `Owner` (add/look-up pets) classes with the
+  core behavior suite `tests/test_pawpal.py` and a Gherkin task-management
+  feature.
 
 ### Changed
 

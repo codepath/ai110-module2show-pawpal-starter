@@ -1,13 +1,30 @@
-"""PawPal+ logic layer: Task, Pet, Owner, and the cross-pet Scheduler.
-
-Skeletons translated from diagrams/uml.mmd; implementations land in the
-feat-task-pet-owner and feat-scheduler-core layers.
-"""
+"""PawPal+ logic layer: Task, Pet, Owner, and the cross-pet Scheduler."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import date
+from dataclasses import dataclass, field, replace
+from datetime import date, time, timedelta
+from enum import StrEnum
+
+
+class Frequency(StrEnum):
+    """Supported task repeat frequencies."""
+
+    ONCE = "once"
+    DAILY = "daily"
+    WEEKLY = "weekly"
+
+
+class Priority(StrEnum):
+    """Supported task priority levels."""
+
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+
+
+# Days between occurrences for each recurring frequency.
+RECURRENCE_DAYS = {Frequency.DAILY: 1, Frequency.WEEKLY: 7}
 
 
 @dataclass
@@ -25,11 +42,14 @@ class Task:
 
     def mark_complete(self) -> None:
         """Mark this task as completed."""
-        ...
+        self.completed = True
 
     def next_occurrence(self) -> Task | None:
         """Return the follow-up Task for a recurring task, else None."""
-        ...
+        days = RECURRENCE_DAYS.get(self.frequency)
+        if days is None:
+            return None
+        return replace(self, date=self.date + timedelta(days=days), completed=False)
 
 
 @dataclass
@@ -42,15 +62,15 @@ class Pet:
 
     def add_task(self, task: Task) -> None:
         """Attach a task to this pet."""
-        ...
+        self.tasks.append(task)
 
     def list_tasks(self) -> list[Task]:
         """Return all of this pet's tasks."""
-        ...
+        return list(self.tasks)
 
     def pending_tasks(self) -> list[Task]:
         """Return this pet's not-yet-completed tasks."""
-        ...
+        return [task for task in self.tasks if not task.completed]
 
 
 @dataclass
@@ -62,11 +82,11 @@ class Owner:
 
     def add_pet(self, pet: Pet) -> None:
         """Add a pet to this owner's household."""
-        ...
+        self.pets.append(pet)
 
     def get_pet(self, name: str) -> Pet | None:
         """Look up a pet by name, or None if absent."""
-        ...
+        return next((pet for pet in self.pets if pet.name == name), None)
 
 
 class Scheduler:
