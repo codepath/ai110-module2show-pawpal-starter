@@ -20,6 +20,8 @@ change relative to `main`.
 - CI: `Test` and `Trunk Check` workflows with stack-safe triggers, README
   badges, an AppTest boot smoke test, and branch protection on `main`
   (ADR-0003).
+- Project tracking: labels, GitHub Project board with issues #1–#17 mapped to
+  the planned PRs, documented in `docs/project-management.md`.
 
 ### Changed
 
