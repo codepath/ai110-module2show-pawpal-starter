@@ -26,11 +26,25 @@ Your final app should:
 
 ### Setup
 
+This project uses [uv](https://docs.astral.sh/uv/) for dependency management (see `docs/decisions/0001-use-uv.md`):
+
+```bash
+uv sync                        # installs runtime + dev dependencies from uv.lock
+uv run streamlit run app.py    # launch the app
+uv run python main.py          # run the CLI demo
+uv run pytest                  # run the tests
+```
+
+<details>
+<summary>Prefer plain pip? (requirements.txt is generated from uv.lock)</summary>
+
 ```bash
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
+
+</details>
 
 ### Suggested workflow
 

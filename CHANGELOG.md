@@ -13,6 +13,13 @@ change relative to `main`.
 - Implementation plan (`docs/plan.md`), task checklist (`docs/tasks.md`), agent
   guardrails (`AGENTS.md`, `CLAUDE.md`), this changelog, and the ADR scaffold
   (`docs/decisions/`).
+- uv project setup: `pyproject.toml` (streamlit runtime dep; pytest + pytest-cov
+  in the dev group), `uv.lock`, and pytest configuration (ADR-0001).
+
+### Changed
+
+- `requirements.txt` is now a generated artifact of `uv export` (pip fallback
+  for graders); README setup instructions rewritten around `uv`.
 
 ### Removed
 

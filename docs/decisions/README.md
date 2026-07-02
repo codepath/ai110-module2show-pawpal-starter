@@ -6,8 +6,7 @@ Significant tool and design decisions for PawPal+, recorded as [MADR](https://ad
 
 | ID | Title | Status | PR |
 |----|-------|--------|----|
-
-<!-- Add a row per ADR: | [ADR-0001](0001-use-uv.md) | Use uv for dependency management | accepted | #N | -->
+| [ADR-0001](0001-use-uv.md) | Use uv for dependency and environment management | accepted | `chore-uv-migration` |
 
 ## Workflow
 
