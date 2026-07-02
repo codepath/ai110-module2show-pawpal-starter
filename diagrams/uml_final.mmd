@@ -30,6 +30,7 @@ classDiagram
         +bool completed
         +String scheduled_time
         +Date schedule_date
+        +String pet_name
         +mark_complete() Task
         +is_due_today() bool
         +get_priority_value() int  %% maps low/medium/high → 3/2/1
@@ -107,9 +108,10 @@ classDiagram
 %%                │                    │                    │ +String priority                  │
 %%                ▼                    ▼                    │ +String frequency                 │
 %%          ┌─────────────────────────────┐                 │ +String preferred_time_of_day     │
-%%                                                          │ +bool completed                   │
+%%          │                             │                 │ +bool completed                   │
 %%          │             Pet             │                 │ +String scheduled_time            │
-%%                                                          │ +Date schedule_date               │
+%%          │                             │                 │ +Date schedule_date               │
+%%          │                             │                 │ +String pet_name                  │
 %%          ├─────────────────────────────┤                 ├───────────────────────────────────┤
 %%          │ +String name                │                 │ +mark_complete() : Task           │
 %%          │ +String species             │                 │ +is_due_today() : bool            │

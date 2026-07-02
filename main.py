@@ -37,7 +37,8 @@ task1 = Task(
     frequency="daily",
     preferred_time_of_day="morning",
     completed=False,
-    scheduled_time="14:00"
+    scheduled_time="14:00",
+    pet_name="Luna"
 )
 
 task2 = Task(
@@ -48,7 +49,8 @@ task2 = Task(
     frequency="daily",
     preferred_time_of_day="morning",
     completed=False,
-    scheduled_time="08:00"
+    scheduled_time="08:00",
+    pet_name="Luna"
 )
 
 task3 = Task(
@@ -59,7 +61,8 @@ task3 = Task(
     frequency="daily",
     preferred_time_of_day="afternoon",
     completed=False,
-    scheduled_time="11:30"
+    scheduled_time="11:30",
+    pet_name="Mochi"
 )
 
 # --- Conflict Detection Test ---
@@ -71,7 +74,8 @@ conflict_task1 = Task(
     frequency="daily",
     preferred_time_of_day="morning",
     completed=False,
-    scheduled_time="09:00"
+    scheduled_time="09:00",
+    pet_name="Luna"
 )
 
 conflict_task2 = Task(
@@ -82,7 +86,8 @@ conflict_task2 = Task(
     frequency="daily",
     preferred_time_of_day="morning",
     completed=False,
-    scheduled_time="09:00"
+    scheduled_time="09:00",
+    pet_name="Luna"
 )
 
 # --- Luna's schedule: Walk + Feeding ---
