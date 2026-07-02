@@ -74,7 +74,14 @@ def main() -> None:
         + ", ".join(f"{pet.name} the {pet.species}" for pet in owner.pets)
     )
 
-    print_schedule("Today's Schedule", scheduler.tasks_for_today())
+    print_schedule("Today's Schedule (as entered)", scheduler.tasks_for_today())
+    print_schedule("Today's Schedule (sorted by time)", scheduler.sort_by_time())
+    print_schedule("Mochi only (filter_by_pet)", scheduler.filter_by_pet("Mochi"))
+
+    scheduler.owner.get_pet("Whiskers").list_tasks()[0].mark_complete()
+    print_schedule(
+        "Still pending (filter_by_status)", scheduler.filter_by_status(completed=False)
+    )
 
     # Demo rescheduling a task
     med_task = owner.get_pet("Whiskers").list_tasks()[2]

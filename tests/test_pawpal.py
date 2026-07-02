@@ -67,6 +67,31 @@ def test_scheduler_collects_tasks_across_multiple_pets():
     assert pet_names == {"Mochi", "Whiskers"}
 
 
+def test_sort_by_time_orders_tasks_chronologically_across_pets():
+    from datetime import time
+
+    owner = two_pet_household()
+    owner.get_pet("Mochi").add_task(make_task("Evening walk", "18:30"))
+    owner.get_pet("Whiskers").add_task(make_task("Play session", "07:15"))
+    times = [task.time for _pet, task in Scheduler(owner).sort_by_time()]
+    assert times == [time(7, 15), time(8, 0), time(9, 0), time(18, 30)]
+
+
+def test_filter_by_status_returns_only_pending_tasks():
+    owner = two_pet_household()
+    owner.get_pet("Mochi").list_tasks()[0].mark_complete()
+    pending = Scheduler(owner).filter_by_status(completed=False)
+    assert [task.description for _pet, task in pending] == ["Feeding"]
+
+
+def test_filter_by_pet_returns_only_that_pets_tasks():
+    scheduler = Scheduler(two_pet_household())
+    entries = scheduler.filter_by_pet("Whiskers")
+    assert [(pet.name, task.description) for pet, task in entries] == [
+        ("Whiskers", "Feeding")
+    ]
+
+
 def test_tasks_for_today_excludes_future_days():
     from datetime import timedelta
 

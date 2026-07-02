@@ -41,6 +41,9 @@ change relative to `main`.
 - CLI demo `main.py` (one owner, two pets, four tasks, readable "Today's
   Schedule"), a subprocess end-to-end test, and the captured sample output in
   the README.
+- Algorithms: `Scheduler.sort_by_time()`, `filter_by_status()`, and
+  `filter_by_pet()` with cross-pet tests; demo shows sorted and filtered
+  views and the README Smarter Scheduling table names the methods.
 
 ### Changed
 

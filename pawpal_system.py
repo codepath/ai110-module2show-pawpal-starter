@@ -106,15 +106,17 @@ class Scheduler:
 
     def sort_by_time(self) -> list[tuple[Pet, Task]]:
         """Return all pairs sorted chronologically by task time."""
-        ...
+        return sorted(self.all_tasks(), key=lambda pair: pair[1].time)
 
     def filter_by_status(self, completed: bool) -> list[tuple[Pet, Task]]:
         """Return pairs whose task completion status matches."""
-        ...
+        return [
+            (pet, task) for pet, task in self.all_tasks() if task.completed == completed
+        ]
 
     def filter_by_pet(self, pet_name: str) -> list[tuple[Pet, Task]]:
         """Return pairs belonging to the named pet."""
-        ...
+        return [(pet, task) for pet, task in self.all_tasks() if pet.name == pet_name]
 
     def detect_conflicts(self) -> list[str]:
         """Return human-readable warnings for same-time task collisions."""

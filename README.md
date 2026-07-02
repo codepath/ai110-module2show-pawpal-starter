@@ -66,11 +66,29 @@ Captured from a real run of `uv run python main.py`:
 ```text
 PawPal+ demo — household of Jordan: Mochi the dog, Whiskers the cat
 
-Today's Schedule
-----------------
+Today's Schedule (as entered)
+-----------------------------
 08:00  Mochi (dog)  Morning walk  [30 min, daily, pending]
 18:30  Mochi (dog)  Evening walk  [30 min, daily, pending]
 09:00  Whiskers (cat)  Feeding  [10 min, daily, pending]
+20:00  Whiskers (cat)  Litter box cleanup  [15 min, once, pending]
+
+Today's Schedule (sorted by time)
+---------------------------------
+08:00  Mochi (dog)  Morning walk  [30 min, daily, pending]
+09:00  Whiskers (cat)  Feeding  [10 min, daily, pending]
+18:30  Mochi (dog)  Evening walk  [30 min, daily, pending]
+20:00  Whiskers (cat)  Litter box cleanup  [15 min, once, pending]
+
+Mochi only (filter_by_pet)
+--------------------------
+08:00  Mochi (dog)  Morning walk  [30 min, daily, pending]
+18:30  Mochi (dog)  Evening walk  [30 min, daily, pending]
+
+Still pending (filter_by_status)
+--------------------------------
+08:00  Mochi (dog)  Morning walk  [30 min, daily, pending]
+18:30  Mochi (dog)  Evening walk  [30 min, daily, pending]
 20:00  Whiskers (cat)  Litter box cleanup  [15 min, once, pending]
 ```
 
@@ -94,12 +112,12 @@ Sample test output:
 
 > Fill in once you've implemented scheduling logic.
 
-| Feature           | Method(s) | Notes                             |
-| ----------------- | --------- | --------------------------------- |
-| Task sorting      |           | e.g., by priority, duration       |
-| Filtering         |           | e.g., skip tasks if time runs out |
-| Conflict handling |           | e.g., overlapping time slots      |
-| Recurring tasks   |           | e.g., daily vs. weekly            |
+| Feature           | Method(s)                                                   | Notes                                                 |
+| ----------------- | ----------------------------------------------------------- | ----------------------------------------------------- |
+| Task sorting      | `Scheduler.sort_by_time()`                                  | Chronological "HH:MM" ordering across **all** pets    |
+| Filtering         | `Scheduler.filter_by_status()`, `Scheduler.filter_by_pet()` | Narrow any view to pending/done tasks or a single pet |
+| Conflict handling |                                                             | _lands with `detect_conflicts()`_                     |
+| Recurring tasks   |                                                             | _lands with `complete_task()` recurrence_             |
 
 ## 📸 Demo Walkthrough
 
