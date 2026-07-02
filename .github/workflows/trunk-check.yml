@@ -1,0 +1,19 @@
+name: Trunk Check
+
+# No branch filter on pull_request: stacked (Graphite) PRs must get checks too.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions: read-all
+
+jobs:
+  trunk-check:
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: trunk-io/trunk-action@v1

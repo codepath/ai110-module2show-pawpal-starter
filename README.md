@@ -1,5 +1,8 @@
 # PawPal+ (Module 2 Project)
 
+[![Test](https://github.com/Inventrohyder/ai110-module2show-pawpal-starter/actions/workflows/test.yml/badge.svg)](https://github.com/Inventrohyder/ai110-module2show-pawpal-starter/actions/workflows/test.yml)
+[![Trunk Check](https://github.com/Inventrohyder/ai110-module2show-pawpal-starter/actions/workflows/trunk-check.yml/badge.svg)](https://github.com/Inventrohyder/ai110-module2show-pawpal-starter/actions/workflows/trunk-check.yml)
+
 You are building **PawPal+**, a Streamlit app that helps a pet owner plan care tasks for their pet.
 
 ## Scenario

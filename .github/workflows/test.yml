@@ -1,0 +1,21 @@
+name: Test
+
+# No branch filter on pull_request: stacked (Graphite) PRs target other PR
+# branches, not main, and must still get checks (see docs/plan.md, ADR-0003).
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v8
+        with:
+          enable-cache: true
+      - name: Install dependencies
+        run: uv sync
+      - name: Run test suite
+        run: uv run pytest

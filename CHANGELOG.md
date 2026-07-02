@@ -17,6 +17,9 @@ change relative to `main`.
   in the dev group), `uv.lock`, and pytest configuration (ADR-0001).
 - trunk.io meta-linter config (`.trunk/`) with pre-commit format and pre-push
   check hooks enabled; repo-wide lint pass now clean (ADR-0002).
+- CI: `Test` and `Trunk Check` workflows with stack-safe triggers, README
+  badges, an AppTest boot smoke test, and branch protection on `main`
+  (ADR-0003).
 
 ### Changed
 
