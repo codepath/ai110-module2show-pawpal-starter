@@ -4,8 +4,20 @@
 
 **a. Initial design**
 
-- Briefly describe your initial UML design.
-- What classes did you include, and what responsibilities did you assign to each?
+Three core actions a user must be able to perform:
+
+1. Add a pet (with basic info) to their household.
+2. Schedule a care task for a pet (what, when, how long, how often).
+3. See "today's schedule" for all pets in one organized view.
+
+For the initial UML (`diagrams/uml.mmd`) I settled on four classes with one responsibility each:
+
+- **Task** — one care activity: description, time ("HH:MM"), date, duration, frequency, and completion status. It knows how to mark itself complete and produce its next occurrence if it recurs.
+- **Pet** — identity (name, species) plus that pet's task list, with methods to add and list tasks. A pet owns its tasks; nothing else edits them directly.
+- **Owner** — identity plus the pets, with methods to add and look up pets. The owner is the single entry point to all household data.
+- **Scheduler** — the "brain". It holds no data of its own; it reads through the Owner and organizes tasks **across all pets**: today view, sorting, filtering, conflict detection, and completing tasks (which drives recurrence).
+
+I asked Claude to draft the Mermaid diagram from this brainstorm and reviewed it for unnecessary complexity — the main thing I enforced was keeping Scheduler stateless (it references the Owner instead of duplicating task lists), so there is exactly one source of truth.
 
 **b. Design changes**
 

@@ -1,15 +1,45 @@
 classDiagram
-    %% Replace the placeholders below with your actual classes, attributes, methods, and relationships.
-    %% Keep this file updated so it matches your final implementation.
+    %% PawPal+ core design (draft — kept in sync with pawpal_system.py; final
+    %% version saved as uml_final.mmd at project close).
 
-    class ClassName {
-        +type attribute
-        +method() returnType
+    class Task {
+        +str description
+        +str time
+        +date date
+        +int duration_minutes
+        +str frequency
+        +bool completed
+        +mark_complete() None
+        +next_occurrence() Task|None
     }
 
-    class AnotherClass {
-        +type attribute
-        +method() returnType
+    class Pet {
+        +str name
+        +str species
+        +list~Task~ tasks
+        +add_task(task) None
+        +list_tasks() list~Task~
+        +pending_tasks() list~Task~
     }
 
-    ClassName --> AnotherClass : relationship
+    class Owner {
+        +str name
+        +list~Pet~ pets
+        +add_pet(pet) None
+        +get_pet(name) Pet|None
+    }
+
+    class Scheduler {
+        +Owner owner
+        +all_tasks() list~PetTaskPair~
+        +tasks_for_today() list~PetTaskPair~
+        +sort_by_time() list~PetTaskPair~
+        +filter_by_status(completed) list~PetTaskPair~
+        +filter_by_pet(pet_name) list~PetTaskPair~
+        +detect_conflicts() list~str~
+        +complete_task(task) Task|None
+    }
+
+    Owner "1" o-- "*" Pet : owns
+    Pet "1" o-- "*" Task : has
+    Scheduler --> Owner : organizes tasks across pets

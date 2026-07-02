@@ -22,6 +22,9 @@ change relative to `main`.
   (ADR-0003).
 - Project tracking: labels, GitHub Project board with issues #1–#17 mapped to
   the planned PRs, documented in `docs/project-management.md`.
+- UML class diagram draft (`diagrams/uml.mmd`): Task, Pet, Owner, Scheduler
+  with attributes, methods, and relationships; reflection §1a documents the
+  three core user actions and class responsibilities.
 
 ### Changed
 
