@@ -2,7 +2,7 @@
 
 from datetime import date
 
-from pawpal_system import Owner, Pet, Task
+from pawpal_system import Owner, Pet, Scheduler, Task
 
 
 def make_task(description: str = "Morning walk", time: str = "08:00", **kwargs) -> Task:
@@ -48,3 +48,46 @@ def test_owner_add_and_get_pet():
 
 def test_get_pet_returns_none_for_unknown_name():
     assert Owner(name="Jordan").get_pet("Ghost") is None
+
+
+def two_pet_household() -> Owner:
+    owner = Owner(name="Jordan")
+    mochi = Pet(name="Mochi", species="dog")
+    whiskers = Pet(name="Whiskers", species="cat")
+    mochi.add_task(make_task("Morning walk", "08:00"))
+    whiskers.add_task(make_task("Feeding", "09:00"))
+    owner.add_pet(mochi)
+    owner.add_pet(whiskers)
+    return owner
+
+
+def test_scheduler_collects_tasks_across_multiple_pets():
+    scheduler = Scheduler(two_pet_household())
+    pet_names = {pet.name for pet, _task in scheduler.all_tasks()}
+    assert pet_names == {"Mochi", "Whiskers"}
+
+
+def test_tasks_for_today_excludes_future_days():
+    from datetime import timedelta
+
+    owner = two_pet_household()
+    owner.get_pet("Mochi").add_task(
+        make_task("Vet visit", "10:00", date=date.today() + timedelta(days=3))
+    )
+    descriptions = [
+        task.description for _pet, task in Scheduler(owner).tasks_for_today()
+    ]
+    assert "Vet visit" not in descriptions
+
+
+def test_tasks_for_today_includes_all_today_tasks():
+    from datetime import timedelta
+
+    owner = two_pet_household()
+    owner.get_pet("Mochi").add_task(
+        make_task("Vet visit", "10:00", date=date.today() + timedelta(days=3))
+    )
+    descriptions = [
+        task.description for _pet, task in Scheduler(owner).tasks_for_today()
+    ]
+    assert len(descriptions) == 2

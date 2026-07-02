@@ -97,11 +97,12 @@ class Scheduler:
 
     def all_tasks(self) -> list[tuple[Pet, Task]]:
         """Return every (pet, task) pair across all pets."""
-        ...
+        return [(pet, task) for pet in self.owner.pets for task in pet.tasks]
 
     def tasks_for_today(self) -> list[tuple[Pet, Task]]:
         """Return (pet, task) pairs due today."""
-        ...
+        today = date.today()
+        return [(pet, task) for pet, task in self.all_tasks() if task.date == today]
 
     def sort_by_time(self) -> list[tuple[Pet, Task]]:
         """Return all pairs sorted chronologically by task time."""

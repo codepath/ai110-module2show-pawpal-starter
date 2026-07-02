@@ -32,8 +32,15 @@ Yes. Two key design decisions emerged during implementation:
 
 **a. Constraints and priorities**
 
-- What constraints does your scheduler consider (for example: time, priority, preferences)?
-- How did you decide which constraints mattered most?
+The scheduler considers, in the order I added them:
+
+1. **Date** — only tasks due today appear in the daily view (`tasks_for_today`).
+2. **Time of day** — tasks are ordered chronologically by their "HH:MM" time (`sort_by_time`).
+3. **Completion status and pet** — views can be narrowed to pending/done tasks or to a single pet (`filter_by_status`, `filter_by_pet`).
+4. **Collisions** — two tasks at the same time raise a warning (`detect_conflicts`), because a single human can't walk the dog and feed the cat simultaneously.
+5. **Priority** (stretch) — high-priority tasks outrank earlier-but-lower-priority ones when I ask for a priority-ordered view.
+
+I decided what mattered most by walking through the day of the busy owner in the scenario: the first question is "what do I do _today_ and in what order" (date + time), then "what's left" (status), then "am I double-booked" (conflicts). Priority came last because it only matters once the basics above already work.
 
 **b. Tradeoffs**
 

@@ -35,6 +35,9 @@ change relative to `main`.
   (add/list/pending tasks), and `Owner` (add/look-up pets) classes with the
   core behavior suite `tests/test_pawpal.py` and a Gherkin task-management
   feature.
+- `Scheduler.all_tasks()` and `tasks_for_today()` operating across every pet
+  in the household, with cross-pet tests; reflection §2a documents the
+  constraint model.
 
 ### Changed
 
