@@ -49,7 +49,7 @@ st.header("Schedule a task")
 if owner.pets:
     task_pet = st.selectbox("Pet", [pet.name for pet in owner.pets], key="task_pet")
     task_description = st.text_input("Task", key="task_description")
-    col_time, col_duration, col_frequency = st.columns(3)
+    col_time, col_duration, col_frequency, col_priority = st.columns(4)
     with col_time:
         task_time = st.time_input("Time", key="task_time")
     with col_duration:
@@ -60,6 +60,10 @@ if owner.pets:
         task_frequency = st.selectbox(
             "Repeats", ["once", "daily", "weekly"], key="task_frequency"
         )
+    with col_priority:
+        task_priority = st.selectbox(
+            "Priority", ["low", "medium", "high"], index=1, key="task_priority"
+        )
 
     if st.button("Add task", key="add_task") and task_description.strip():
         owner.get_pet(task_pet).add_task(
@@ -69,6 +73,7 @@ if owner.pets:
                 date=date.today(),
                 duration_minutes=int(task_duration),
                 frequency=task_frequency,
+                priority=task_priority,
             )
         )
         st.success(f"Scheduled '{task_description.strip()}' for {task_pet}.")
@@ -81,15 +86,25 @@ st.header("Today's schedule")
 for conflict in scheduler.detect_conflicts():
     st.warning(f"⚠️ {conflict}")
 
-status_filter = st.radio(
-    "Show", ["All", "Pending", "Done"], horizontal=True, key="status_filter"
+col_show, col_order = st.columns(2)
+with col_show:
+    status_filter = st.radio(
+        "Show", ["All", "Pending", "Done"], horizontal=True, key="status_filter"
+    )
+with col_order:
+    order_by = st.radio(
+        "Order by", ["Time", "Priority"], horizontal=True, key="order_by"
+    )
+
+sorted_entries = (
+    scheduler.sort_by_time() if order_by == "Time" else scheduler.sort_by_priority()
 )
 if status_filter == "All":
-    entries = scheduler.sort_by_time()
+    entries = sorted_entries
 else:
     entries = [
         (pet, task)
-        for pet, task in scheduler.sort_by_time()
+        for pet, task in sorted_entries
         if task.completed == (status_filter == "Done")
     ]
 
@@ -102,6 +117,7 @@ if entries:
                 "Task": task.description,
                 "Duration (min)": task.duration_minutes,
                 "Repeats": task.frequency,
+                "Priority": task.priority,
                 "Status": "✅ done" if task.completed else "⏳ pending",
             }
             for pet, task in entries

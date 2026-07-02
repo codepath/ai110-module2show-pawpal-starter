@@ -59,6 +59,19 @@ def test_same_time_tasks_show_a_conflict_warning(app: AppTest):
     assert "Conflict at 08:00" in warnings
 
 
+def test_order_by_priority_puts_high_priority_task_first(app: AppTest):
+    add_pet(app, "Rex")
+    add_task(app, "Rex", "Morning walk", datetime.time(8, 0))
+    app.selectbox(key="task_pet").select("Rex")
+    app.text_input(key="task_description").input("Vet visit")
+    app.time_input(key="task_time").set_value(datetime.time(16, 0))
+    app.selectbox(key="task_priority").select("high")
+    app.button(key="add_task").click().run()
+    app.radio(key="order_by").set_value("Priority").run()
+    table = app.table[0].value
+    assert list(table["Task"]) == ["Vet visit", "Morning walk"]
+
+
 def test_completing_a_recurring_task_marks_it_complete(app: AppTest):
     add_pet(app, "Rex")
     app.selectbox(key="task_pet").select("Rex")

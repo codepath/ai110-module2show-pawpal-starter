@@ -26,6 +26,9 @@ class Priority(StrEnum):
 # Days between occurrences for each recurring frequency.
 RECURRENCE_DAYS = {Frequency.DAILY: 1, Frequency.WEEKLY: 7}
 
+# Sort rank per priority level (lower rank sorts first).
+PRIORITY_RANK = {Priority.HIGH: 0, Priority.MEDIUM: 1, Priority.LOW: 2}
+
 
 @dataclass
 class Task:
@@ -39,6 +42,17 @@ class Task:
         Frequency.ONCE
     )  # converts to Frequency in __post_init__
     completed: bool = False
+    priority: Priority | str = Priority.MEDIUM  # converts to Priority in __post_init__
+
+    def __post_init__(self) -> None:
+        """Coerce string inputs to datetime.time and StrEnum objects."""
+        if isinstance(self.time, str):
+            hours, minutes = map(int, self.time.split(":"))
+            self.time = time(hours, minutes)
+        if isinstance(self.frequency, str):
+            self.frequency = Frequency(self.frequency)
+        if isinstance(self.priority, str):
+            self.priority = Priority(self.priority)
 
     def mark_complete(self) -> None:
         """Mark this task as completed."""
@@ -107,6 +121,13 @@ class Scheduler:
     def sort_by_time(self) -> list[tuple[Pet, Task]]:
         """Return all pairs sorted chronologically by task time."""
         return sorted(self.all_tasks(), key=lambda pair: pair[1].time)
+
+    def sort_by_priority(self) -> list[tuple[Pet, Task]]:
+        """Return all pairs ordered by priority (high first), then by time."""
+        return sorted(
+            self.all_tasks(),
+            key=lambda pair: (PRIORITY_RANK.get(pair[1].priority, 1), pair[1].time),
+        )
 
     def filter_by_status(self, completed: bool) -> list[tuple[Pet, Task]]:
         """Return pairs whose task completion status matches."""

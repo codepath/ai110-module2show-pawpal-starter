@@ -54,6 +54,10 @@ change relative to `main`.
   add-task forms calling real methods, sorted schedule table with status
   filter, conflict warnings via `st.warning`, and task completion with
   recurring reschedule feedback — covered by five AppTest end-to-end tests.
+- Priority-based scheduling (stretch): `Task.priority` (low/medium/high),
+  `Scheduler.sort_by_priority()` (priority first, time tiebreak), a priority
+  picker + "Order by" toggle in the UI, and a captured priority-view CLI
+  example in the README.
 
 ### Changed
 

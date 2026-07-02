@@ -61,7 +61,7 @@ def print_schedule(title: str, entries: list) -> None:
         status = "done" if task.completed else "pending"
         print(
             f"{task.time}  {pet.name} ({pet.species})  {task.description}"
-            f"  [{task.duration_minutes} min, {task.frequency}, {status}]"
+            f"  [{task.duration_minutes} min, {task.frequency}, {task.priority}, {status}]"
         )
 
 
@@ -103,6 +103,20 @@ def main() -> None:
     )
     for warning in scheduler.detect_conflicts():
         print(f"  ⚠️  {warning}")
+
+    owner.get_pet("Mochi").add_task(
+        Task(
+            "Vet appointment",
+            time(16, 0),
+            date.today(),
+            duration_minutes=45,
+            priority=Priority.HIGH,
+        )
+    )
+    print_schedule(
+        "Priority view (sort_by_priority: high first, then time)",
+        scheduler.sort_by_priority(),
+    )
 
     # Demo rescheduling a task
     med_task = owner.get_pet("Whiskers").list_tasks()[2]

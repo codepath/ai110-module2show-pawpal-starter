@@ -156,6 +156,21 @@ def test_completing_one_off_task_does_not_add_to_list():
     assert len(whiskers.list_tasks()) == 1
 
 
+def test_sort_by_priority_puts_high_priority_first_despite_later_time():
+    owner = two_pet_household()
+    owner.get_pet("Whiskers").add_task(make_task("Vet meds", "19:00", priority="high"))
+    entries = Scheduler(owner).sort_by_priority()
+    assert [task.description for _pet, task in entries][0] == "Vet meds"
+
+
+def test_sort_by_priority_breaks_ties_by_time():
+    from datetime import time
+
+    owner = two_pet_household()  # both existing tasks are medium priority
+    times = [task.time for _pet, task in Scheduler(owner).sort_by_priority()]
+    assert times == [time(8, 0), time(9, 0)]
+
+
 def test_detect_conflicts_flags_same_time_tasks_across_pets():
     owner = two_pet_household()
     owner.get_pet("Whiskers").add_task(make_task("Medication", "08:00"))

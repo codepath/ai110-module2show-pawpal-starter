@@ -68,33 +68,43 @@ PawPal+ demo — household of Jordan: Mochi the dog, Whiskers the cat
 
 Today's Schedule (as entered)
 -----------------------------
-08:00  Mochi (dog)  Morning walk  [30 min, daily, pending]
-18:30  Mochi (dog)  Evening walk  [30 min, daily, pending]
-09:00  Whiskers (cat)  Feeding  [10 min, daily, pending]
-20:00  Whiskers (cat)  Litter box cleanup  [15 min, once, pending]
+08:00  Mochi (dog)  Morning walk  [30 min, daily, medium, pending]
+18:30  Mochi (dog)  Evening walk  [30 min, daily, medium, pending]
+09:00  Whiskers (cat)  Feeding  [10 min, daily, medium, pending]
+20:00  Whiskers (cat)  Litter box cleanup  [15 min, once, medium, pending]
 
 Today's Schedule (sorted by time)
 ---------------------------------
-08:00  Mochi (dog)  Morning walk  [30 min, daily, pending]
-09:00  Whiskers (cat)  Feeding  [10 min, daily, pending]
-18:30  Mochi (dog)  Evening walk  [30 min, daily, pending]
-20:00  Whiskers (cat)  Litter box cleanup  [15 min, once, pending]
+08:00  Mochi (dog)  Morning walk  [30 min, daily, medium, pending]
+09:00  Whiskers (cat)  Feeding  [10 min, daily, medium, pending]
+18:30  Mochi (dog)  Evening walk  [30 min, daily, medium, pending]
+20:00  Whiskers (cat)  Litter box cleanup  [15 min, once, medium, pending]
 
 Mochi only (filter_by_pet)
 --------------------------
-08:00  Mochi (dog)  Morning walk  [30 min, daily, pending]
-18:30  Mochi (dog)  Evening walk  [30 min, daily, pending]
+08:00  Mochi (dog)  Morning walk  [30 min, daily, medium, pending]
+18:30  Mochi (dog)  Evening walk  [30 min, daily, medium, pending]
 
 Still pending (filter_by_status)
 --------------------------------
-08:00  Mochi (dog)  Morning walk  [30 min, daily, pending]
-18:30  Mochi (dog)  Evening walk  [30 min, daily, pending]
-20:00  Whiskers (cat)  Litter box cleanup  [15 min, once, pending]
+08:00  Mochi (dog)  Morning walk  [30 min, daily, medium, pending]
+18:30  Mochi (dog)  Evening walk  [30 min, daily, medium, pending]
+20:00  Whiskers (cat)  Litter box cleanup  [15 min, once, medium, pending]
 
 Completed 'Morning walk' (daily) -> next occurrence auto-scheduled for tomorrow at 08:00
 
 Added 'Medication' for Whiskers at 18:30 (same time as Mochi's evening walk):
   ⚠️  Conflict at 18:30 on today: Evening walk (Mochi) overlaps Medication (Whiskers)
+
+Priority view (sort_by_priority: high first, then time)
+-------------------------------------------------------
+16:00  Mochi (dog)  Vet appointment  [45 min, once, high, pending]
+08:00  Mochi (dog)  Morning walk  [30 min, daily, medium, done]
+08:00  Mochi (dog)  Morning walk  [30 min, daily, medium, pending]
+09:00  Whiskers (cat)  Feeding  [10 min, daily, medium, done]
+18:30  Mochi (dog)  Evening walk  [30 min, daily, medium, pending]
+18:30  Whiskers (cat)  Medication  [5 min, once, medium, pending]
+20:00  Whiskers (cat)  Litter box cleanup  [15 min, once, medium, pending]
 ```
 
 ## 🧪 Testing PawPal+
@@ -117,12 +127,15 @@ Sample test output:
 
 > Fill in once you've implemented scheduling logic.
 
-| Feature           | Method(s)                                                   | Notes                                                                       |
-| ----------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------- |
-| Task sorting      | `Scheduler.sort_by_time()`                                  | Chronological "HH:MM" ordering across **all** pets                          |
-| Filtering         | `Scheduler.filter_by_status()`, `Scheduler.filter_by_pet()` | Narrow any view to pending/done tasks or a single pet                       |
-| Conflict handling | `Scheduler.detect_conflicts()`                              | Warns (never crashes) on identical date+time collisions, across pets        |
-| Recurring tasks   | `Scheduler.complete_task()`, `Task.next_occurrence()`       | Completing a daily/weekly task auto-schedules the next occurrence (+1d/+7d) |
+| Feature                     | Method(s)                                                   | Notes                                                                         |
+| --------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Task sorting                | `Scheduler.sort_by_time()`                                  | Chronological "HH:MM" ordering across **all** pets                            |
+| Filtering                   | `Scheduler.filter_by_status()`, `Scheduler.filter_by_pet()` | Narrow any view to pending/done tasks or a single pet                         |
+| Conflict handling           | `Scheduler.detect_conflicts()`                              | Warns (never crashes) on identical date+time collisions, across pets          |
+| Recurring tasks             | `Scheduler.complete_task()`, `Task.next_occurrence()`       | Completing a daily/weekly task auto-schedules the next occurrence (+1d/+7d)   |
+| Priority ordering (stretch) | `Scheduler.sort_by_priority()`                              | High > medium > low, ties broken chronologically; "Order by" toggle in the UI |
+
+The "Priority view" block in [Sample Output](#%EF%B8%8F-sample-output) above is the captured CLI demonstration of the priority-based enhancement: the 16:00 high-priority vet appointment outranks every earlier medium-priority task.
 
 ## 📸 Demo Walkthrough
 
