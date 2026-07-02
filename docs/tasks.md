@@ -141,8 +141,8 @@
 
 ### PR 21 `docs-model-comparison` (+2)
 
-- [ ] Same rescheduling task → two models (Haiku 4.5 vs Fable 5; optional Gemini)
-- [ ] ai_interactions.md **Prompt Comparison** table fully filled + final decision
+- [x] Same rescheduling task → two models (Haiku 4.5 vs Fable 5; optional Gemini)
+- [x] ai_interactions.md **Prompt Comparison** table fully filled + final decision
 
 ## Phase E — Finalization
 
