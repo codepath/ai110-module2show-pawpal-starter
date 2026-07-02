@@ -18,6 +18,39 @@ if "owner" not in st.session_state:
 owner: Owner = st.session_state.owner
 scheduler = Scheduler(owner)
 
+# --- Save & Load Sidebar ---------------------------------------------------
+with st.sidebar:
+    st.header("Save & Load Data")
+    save_path = st.text_input(
+        "Data file path", value="pawpal_data.json", key="save_path"
+    )
+
+    col_save, col_load = st.columns(2)
+    with col_save:
+        if st.button("Save Data", key="save_btn"):
+            from pawpal_system import save_to_json
+
+            try:
+                save_to_json(owner, save_path)
+                st.success("Saved!")
+            except Exception as e:
+                st.error(f"Error saving: {e}")
+    with col_load:
+        if st.button("Load Data", key="load_btn"):
+            import os
+
+            from pawpal_system import load_from_json
+
+            if os.path.exists(save_path):
+                try:
+                    loaded_owner = load_from_json(save_path)
+                    st.session_state.owner = loaded_owner
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Error loading: {e}")
+            else:
+                st.error("File not found!")
+
 # --- Household -------------------------------------------------------------
 st.header("Household")
 

@@ -113,3 +113,34 @@ def test_completing_a_recurring_task_reschedules_for_tomorrow(app: AppTest):
     app.button(key="mark_complete").click().run()
     rex_tasks = app.session_state["owner"].get_pet("Rex").list_tasks()
     assert rex_tasks[1].date == datetime.date.today() + datetime.timedelta(days=1)
+
+
+def test_app_save_creates_json_file(app: AppTest, tmp_path):
+    app.text_input(key="owner_name").input("Alex").run()
+    add_pet(app, "Fido")
+    save_file = tmp_path / "app_data.json"
+    app.text_input(key="save_path").input(str(save_file)).run()
+    app.button(key="save_btn").click().run()
+    assert save_file.exists()
+
+
+def test_app_load_restores_owner_name(app: AppTest, tmp_path):
+    app.text_input(key="owner_name").input("Alex").run()
+    add_pet(app, "Fido")
+    save_file = tmp_path / "app_data.json"
+    app.text_input(key="save_path").input(str(save_file)).run()
+    app.button(key="save_btn").click().run()
+    app.text_input(key="owner_name").input("Jordan").run()
+    app.button(key="load_btn").click().run()
+    assert app.session_state["owner"].name == "Alex"
+
+
+def test_app_load_restores_pet_object(app: AppTest, tmp_path):
+    app.text_input(key="owner_name").input("Alex").run()
+    add_pet(app, "Fido")
+    save_file = tmp_path / "app_data.json"
+    app.text_input(key="save_path").input(str(save_file)).run()
+    app.button(key="save_btn").click().run()
+    app.text_input(key="owner_name").input("Jordan").run()
+    app.button(key="load_btn").click().run()
+    assert app.session_state["owner"].get_pet("Fido") is not None

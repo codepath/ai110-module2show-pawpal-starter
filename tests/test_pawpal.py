@@ -279,3 +279,97 @@ def test_tasks_for_today_includes_all_today_tasks():
         task.description for _pet, task in Scheduler(owner).tasks_for_today()
     ]
     assert len(descriptions) == 2
+
+
+def run_persistence_round_trip(tmp_path) -> Owner:
+    from pawpal_system import Priority, load_from_json, save_to_json
+
+    owner = Owner(name="Jordan")
+    pet = Pet(name="Mochi", species="dog")
+    task1 = Task("Morning walk", "08:00", date.today(), 30, "daily")
+    task2 = Task(
+        "Vet checkup", "14:00", date.today(), 45, "once", priority=Priority.HIGH
+    )
+    pet.add_task(task1)
+    pet.add_task(task2)
+    owner.add_pet(pet)
+
+    file_path = tmp_path / "test_data.json"
+    save_to_json(owner, str(file_path))
+    return load_from_json(str(file_path))
+
+
+def test_persistence_owner_name(tmp_path):
+    loaded = run_persistence_round_trip(tmp_path)
+    assert loaded.name == "Jordan"
+
+
+def test_persistence_pets_count(tmp_path):
+    loaded = run_persistence_round_trip(tmp_path)
+    assert len(loaded.pets) == 1
+
+
+def test_persistence_pet_name(tmp_path):
+    loaded = run_persistence_round_trip(tmp_path)
+    assert loaded.pets[0].name == "Mochi"
+
+
+def test_persistence_pet_species(tmp_path):
+    loaded = run_persistence_round_trip(tmp_path)
+    assert loaded.pets[0].species == "dog"
+
+
+def test_persistence_tasks_count(tmp_path):
+    loaded = run_persistence_round_trip(tmp_path)
+    assert len(loaded.pets[0].tasks) == 2
+
+
+def test_persistence_task1_description(tmp_path):
+    loaded = run_persistence_round_trip(tmp_path)
+    assert loaded.pets[0].tasks[0].description == "Morning walk"
+
+
+def test_persistence_task1_time(tmp_path):
+    from datetime import time
+
+    loaded = run_persistence_round_trip(tmp_path)
+    assert loaded.pets[0].tasks[0].time == time(8, 0)
+
+
+def test_persistence_task2_priority(tmp_path):
+    from pawpal_system import Priority
+
+    loaded = run_persistence_round_trip(tmp_path)
+    assert loaded.pets[0].tasks[1].priority == Priority.HIGH
+
+
+def test_reschedule_task_updates_time():
+    from datetime import time
+
+    owner = two_pet_household()
+    mochi = owner.get_pet("Mochi")
+    walk = mochi.list_tasks()[0]
+    Scheduler(owner).reschedule_task(walk, time(10, 30), date.today())
+    assert walk.time == time(10, 30)
+
+
+def test_reschedule_task_updates_date():
+    from datetime import timedelta
+
+    owner = two_pet_household()
+    mochi = owner.get_pet("Mochi")
+    walk = mochi.list_tasks()[0]
+    new_date = date.today() + timedelta(days=1)
+    Scheduler(owner).reschedule_task(walk, "08:00", new_date)
+    assert walk.date == new_date
+
+
+def test_reschedule_task_raises_error_for_completed():
+    import pytest
+
+    owner = two_pet_household()
+    mochi = owner.get_pet("Mochi")
+    walk = mochi.list_tasks()[0]
+    walk.mark_complete()
+    with pytest.raises(ValueError, match="Cannot reschedule a completed task"):
+        Scheduler(owner).reschedule_task(walk, "10:30", date.today())

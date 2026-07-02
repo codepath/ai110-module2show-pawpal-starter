@@ -62,6 +62,7 @@ change relative to `main`.
   `Scheduler.find_next_available_slot()` scans all pets' pending tasks as busy
   blocks in a 07:00–21:00 window; "Find a free slot" UI section, demo line,
   and the ai_interactions.md Agent Workflow write-up.
+- JSON Persistence (stretch): `save_to_json()` and `load_from_json()` using stdlib json to save and restore household data; CLI demo, sidebar controls in the UI, and full unit/UI test coverage.
 
 ### Changed
 

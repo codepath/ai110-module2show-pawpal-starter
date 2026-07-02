@@ -130,9 +130,9 @@
 
 ### PR 19 `feat-persistence` (+2)
 
-- [ ] `save_to_json` / `load_from_json` (stdlib) + round-trip test (real file)
-- [ ] main.py + app.py sidebar hooks
-- [ ] README Persistence section (workflow + files modified)
+- [x] `save_to_json` / `load_from_json` (stdlib) + round-trip test (real file)
+- [x] main.py + app.py sidebar hooks
+- [x] README Persistence section (workflow + files modified)
 
 ### PR 20 `feat-output-formatting` (+2)
 

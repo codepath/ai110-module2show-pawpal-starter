@@ -140,6 +140,22 @@ Sample test output:
 
 The "Priority view" block in [Sample Output](#%EF%B8%8F-sample-output) above is the captured CLI demonstration of the priority-based enhancement: the 16:00 high-priority vet appointment outranks every earlier medium-priority task.
 
+## 💾 Persistence
+
+The application supports saving and loading the household scheduling state to and from JSON files using Python's standard library.
+
+### Persistence Workflow
+
+1. **Save Data**: The system serializes the `Owner` object (along with its list of `Pet` objects and their corresponding `Task` lists) into a nested JSON structure. Since `datetime.date` objects are not JSON serializable by default, a custom encoder (`_PawPalEncoder`) translates dates into ISO-formatted strings (`YYYY-MM-DD`).
+2. **Load Data**: The system reads the JSON file, parses the nesting, parses date strings back to Python `date` objects, and reconstructs the domain model graph (`Owner` -> `Pet` -> `Task`).
+3. **UI Integration**: The Streamlit sidebar provides input for the target file path and buttons to trigger saving and loading. On load, the `st.session_state.owner` is updated and `st.rerun()` is triggered to refresh the UI immediately with the restored household data.
+
+### Files Modified
+
+- [pawpal_system.py](pawpal_system.py): Implements `_PawPalEncoder`, `save_to_json()`, and `load_from_json()`.
+- [app.py](app.py): Integrates save and load buttons and state management in the sidebar.
+- [main.py](main.py): Demonstrates a save and load round-trip in the CLI demo execution.
+
 ## 📸 Demo Walkthrough
 
 Describe your app in numbered steps so a reader can follow along without watching a video:

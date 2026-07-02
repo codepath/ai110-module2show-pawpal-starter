@@ -136,6 +136,25 @@ def main() -> None:
         for warning in warnings:
             print(f"  ⚠️  {warning}")
 
+    # Demo save/load persistence
+    import os
+
+    from pawpal_system import load_from_json, save_to_json
+
+    data_path = "data.json"
+    print(f"\nSaving data to {data_path}...")
+    save_to_json(owner, data_path)
+
+    print(f"Loading data back from {data_path}...")
+    loaded_owner = load_from_json(data_path)
+    loaded_scheduler = Scheduler(loaded_owner)
+
+    print(f"Loaded Owner: {loaded_owner.name}")
+    print_schedule("Loaded Household Schedule", loaded_scheduler.all_tasks())
+
+    if os.path.exists(data_path):
+        os.remove(data_path)
+
 
 if __name__ == "__main__":
     main()

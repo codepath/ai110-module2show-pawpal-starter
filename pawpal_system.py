@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field, replace
 from datetime import date, time, timedelta
 from enum import StrEnum
@@ -228,3 +229,66 @@ class Scheduler:
             return None
         owning_pet.add_task(follow_up)
         return follow_up
+
+    def reschedule_task(
+        self, task: Task, new_time: time | str, new_date: date
+    ) -> list[str]:
+        """Reschedule a task to a new time and date, returning any conflict warnings.
+
+        Raises:
+            ValueError: If the task is already completed.
+        """
+        if task.completed:
+            raise ValueError("Cannot reschedule a completed task.")
+        if isinstance(new_time, str):
+            hours, minutes = map(int, new_time.split(":"))
+            new_time = time(hours, minutes)
+        task.time = new_time
+        task.date = new_date
+        return self.detect_conflicts()
+
+
+class _PawPalEncoder(json.JSONEncoder):
+    """Custom JSON encoder to serialize date and time objects."""
+
+    def default(self, obj):
+        if isinstance(obj, date):
+            return obj.isoformat()
+        if isinstance(obj, time):
+            return obj.strftime("%H:%M")
+        return super().default(obj)
+
+
+def save_to_json(owner: Owner, path: str) -> None:
+    """Save owner, pets, and tasks data to a JSON file."""
+    from dataclasses import asdict
+
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(asdict(owner), f, cls=_PawPalEncoder, indent=2)
+
+
+def load_from_json(path: str) -> Owner:
+    """Load owner, pets, and tasks data from a JSON file."""
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    owner = Owner(name=data["name"])
+    for pet_data in data.get("pets", []):
+        pet = Pet(name=pet_data["name"], species=pet_data["species"])
+        for task_data in pet_data.get("tasks", []):
+            task = Task(
+                description=task_data["description"],
+                time=task_data["time"],
+                date=(
+                    date.fromisoformat(task_data["date"])
+                    if isinstance(task_data["date"], str)
+                    else task_data["date"]
+                ),
+                duration_minutes=task_data["duration_minutes"],
+                frequency=task_data["frequency"],
+                completed=task_data["completed"],
+                priority=task_data.get("priority", "medium"),
+            )
+            pet.add_task(task)
+        owner.add_pet(pet)
+    return owner
