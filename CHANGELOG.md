@@ -38,6 +38,9 @@ change relative to `main`.
 - `Scheduler.all_tasks()` and `tasks_for_today()` operating across every pet
   in the household, with cross-pet tests; reflection §2a documents the
   constraint model.
+- CLI demo `main.py` (one owner, two pets, four tasks, readable "Today's
+  Schedule"), a subprocess end-to-end test, and the captured sample output in
+  the README.
 
 ### Changed
 

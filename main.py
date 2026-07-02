@@ -1,0 +1,96 @@
+"""CLI demo for PawPal+: builds a two-pet household and prints today's schedule.
+
+Run with: uv run python main.py
+"""
+
+from datetime import date, time
+
+from pawpal_system import Frequency, Owner, Pet, Priority, Scheduler, Task
+
+
+def build_demo_household() -> Owner:
+    """One owner, two pets, four tasks at different times (all today)."""
+    owner = Owner(name="Jordan")
+
+    mochi = Pet(name="Mochi", species="dog")
+    mochi.add_task(
+        Task(
+            "Morning walk",
+            time(8, 0),
+            date.today(),
+            duration_minutes=30,
+            frequency=Frequency.DAILY,
+        )
+    )
+    mochi.add_task(
+        Task(
+            "Evening walk",
+            time(18, 30),
+            date.today(),
+            duration_minutes=30,
+            frequency=Frequency.DAILY,
+        )
+    )
+
+    whiskers = Pet(name="Whiskers", species="cat")
+    whiskers.add_task(
+        Task(
+            "Feeding",
+            time(9, 0),
+            date.today(),
+            duration_minutes=10,
+            frequency=Frequency.DAILY,
+        )
+    )
+    whiskers.add_task(
+        Task("Litter box cleanup", time(20, 0), date.today(), duration_minutes=15)
+    )
+
+    owner.add_pet(mochi)
+    owner.add_pet(whiskers)
+    return owner
+
+
+def print_schedule(title: str, entries: list) -> None:
+    """Print (pet, task) pairs as one aligned line each."""
+    print(f"\n{title}")
+    print("-" * len(title))
+    if not entries:
+        print("(nothing scheduled)")
+    for pet, task in entries:
+        status = "done" if task.completed else "pending"
+        print(
+            f"{task.time}  {pet.name} ({pet.species})  {task.description}"
+            f"  [{task.duration_minutes} min, {task.frequency}, {status}]"
+        )
+
+
+def main() -> None:
+    owner = build_demo_household()
+    scheduler = Scheduler(owner)
+
+    print(
+        f"PawPal+ demo — household of {owner.name}: "
+        + ", ".join(f"{pet.name} the {pet.species}" for pet in owner.pets)
+    )
+
+    print_schedule("Today's Schedule", scheduler.tasks_for_today())
+
+    # Demo rescheduling a task
+    med_task = owner.get_pet("Whiskers").list_tasks()[2]
+    print("\nRescheduling Whiskers' Medication from 18:30 to 19:30...")
+    warnings = scheduler.reschedule_task(med_task, time(19, 30), date.today())
+    new_time_str = (
+        med_task.time.strftime("%H:%M")
+        if isinstance(med_task.time, time)
+        else med_task.time
+    )
+    print(f"Rescheduled successfully. New time: {new_time_str} on {med_task.date}.")
+    if warnings:
+        print("Warnings:")
+        for warning in warnings:
+            print(f"  ⚠️  {warning}")
+
+
+if __name__ == "__main__":
+    main()

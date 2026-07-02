@@ -61,14 +61,17 @@ pip install -r requirements.txt
 
 ## 🖥️ Sample Output
 
-Paste a sample of your app's CLI or Streamlit output here so a reader can see what a generated plan looks like:
+Captured from a real run of `uv run python main.py`:
 
 ```text
-# e.g.:
-# Daily plan for Biscuit (Golden Retriever):
-#   08:00 — Morning walk (30 min) [priority: high]
-#   09:00 — Feeding (10 min) [priority: high]
-#   ...
+PawPal+ demo — household of Jordan: Mochi the dog, Whiskers the cat
+
+Today's Schedule
+----------------
+08:00  Mochi (dog)  Morning walk  [30 min, daily, pending]
+18:30  Mochi (dog)  Evening walk  [30 min, daily, pending]
+09:00  Whiskers (cat)  Feeding  [10 min, daily, pending]
+20:00  Whiskers (cat)  Litter box cleanup  [15 min, once, pending]
 ```
 
 ## 🧪 Testing PawPal+
