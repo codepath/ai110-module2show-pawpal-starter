@@ -155,6 +155,6 @@
 
 ### PR 23 `docs-rubric-audit`
 
-- [ ] `docs/rubric-audit.md`: every rubric line → evidence link
-- [ ] Instructions' submission checklist ticked
-- [ ] Holes → `gt absorb` fixes into owning layer before submission
+- [x] `docs/rubric-audit.md`: every rubric line → evidence link
+- [x] Instructions' submission checklist ticked
+- [x] Holes → `gt absorb` fixes into owning layer before submission
