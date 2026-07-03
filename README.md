@@ -22,6 +22,13 @@ Your final app should:
 - Display the plan clearly (and ideally explain the reasoning)
 - Include tests for the most important scheduling behaviors
 
+## ✨ Features
+
+- **Sort tasks by time of day** — View every task in chronological order so your day reads top to bottom. Tasks without a set time are grouped neatly at the end.
+- **Filter by pet and status** — Narrow the task list to a single pet, to only what's still pending, or to what's already done — or combine both to focus on exactly what needs attention.
+- **Conflict detection** — Get clear warnings when two tasks are scheduled for the same time, including whether the clash is for the same pet or across different pets. Warnings never block you — you stay in control of the final call.
+- **Recurring tasks** — Mark a task as daily or weekly and PawPal+ automatically generates the next occurrence when you complete it, so routine care stays on the calendar without re-entering it. Completing the same task twice never creates a duplicate.
+
 ## Getting started
 
 ### Setup
@@ -47,6 +54,11 @@ pip install -r requirements.txt
 Paste a sample of your app's CLI or Streamlit output here so a reader can see what a generated plan looks like:
 
 ```
+# Daily plan for Alice — 2026-06-28
+#  08:00-08:10  Feed Whiskers (10 min) [high]
+#  08:10-08:25  Feed Buddy (15 min) [high]
+#  08:25-08:55  Walk Buddy (30 min) [high]
+
 # e.g.:
 # Daily plan for Biscuit (Golden Retriever):
 #   08:00 — Morning walk (30 min) [priority: high]
@@ -57,8 +69,8 @@ Paste a sample of your app's CLI or Streamlit output here so a reader can see wh
 ## 🧪 Testing PawPal+
 
 ```bash
-# Run the full test suite:
-pytest
+# Run the full test suite: my tests cover mostly everything in the scheduler sorting, filtering, recurring and conflicts 
+pyhton -m pytest
 
 # Run with coverage:
 pytest --cov
@@ -69,17 +81,26 @@ Sample test output:
 ```
 # Paste your pytest output here
 ```
+========================================= test session start =========================================
+platform win32 -- Python 3.14.3, pytest-9.1.1, pluggy-1.6.0
+rootdir: C:\Users\kerouat\ai110-module2show-pawpal-starter
+plugins: anyio-4.14.1
+collected 34 items                                                                                                                                                                                                                
+
+tests\test_pawpal.py ..................................                                                                                                                                                                     [100%]
+
+========================================= 34 passed in 0.26s =========================================
 
 ## 📐 Smarter Scheduling
 
 > Fill in once you've implemented scheduling logic.
 
-| Feature | Method(s) | Notes |
-|---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+| Feature           | Method(s)         | Notes                             |
+|-------------------|-------------------|-----------------------------------|
+| Task sorting      | sort_by_time      | e.g., by priority, duration       |
+| Filtering         | tasks_by_status   | e.g., skip tasks if time runs out |
+| Conflict handling | detect_conflicts  | e.g., overlapping time slots      |
+| Recurring tasks   | _next_occurence   | e.g., daily vs. weekly            |
 
 ## 📸 Demo Walkthrough
 

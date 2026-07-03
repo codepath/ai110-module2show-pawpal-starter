@@ -1,5 +1,5 @@
 classDiagram
-    %% PawPal+ class diagram (draft). Refine to match your Python implementation as it grows.
+    %% PawPal+ class diagram — aligned with pawpal_system.py
 
     class Owner {
         +str name
@@ -9,7 +9,8 @@ classDiagram
         +remove_pet(name str) None
         +get_pet(name str) Pet
         +all_tasks() list~PetTask~
-        +tasks_for(pet_name str) list~PetTask~
+        +tasks_for(pet_name str, status str) list~PetTask~
+        +tasks_by_status(status str) list~PetTask~
         +build_plan(day date) DailyPlan
     }
 
@@ -22,15 +23,21 @@ classDiagram
     }
 
     class PetTask {
+        +dict PRIORITY_WEIGHTS$
+        +dict FREQUENCY_DAYS$
         +str title
         +int duration_minutes
         +str priority
         +str category
+        +str frequency
         +bool recurring
+        +str time
+        +date due_date
         +str status
-        +mark_complete() None
+        +mark_complete() PetTask
         +priority_weight() int
         +summary() str
+        -_next_occurrence() PetTask
     }
 
     class Constraints {
@@ -51,11 +58,15 @@ classDiagram
         +add(task PetTask, start_time str) None
         +total_minutes() int
         +explain() str
+        +sort_by_time(tasks list~PetTask~) list~PetTask~$
+        +detect_conflicts(pets list~Pet~) list~str~$
     }
 
     Owner "1" *-- "many" Pet : owns
     Pet "1" *-- "many" PetTask : has
-    Owner "1" *-- "1" Constraints : sets
+    Owner "1" --> "0..1" Constraints : sets
     Owner ..> DailyPlan : builds
     DailyPlan ..> PetTask : schedules
+    DailyPlan ..> Pet : detects conflicts
     DailyPlan ..> Constraints : respects
+    PetTask ..> PetTask : spawns next occurrence
