@@ -1,0 +1,43 @@
+classDiagram
+    class Owner {
+        +dict info
+        +Pet pet
+        +List~Task~ tasks
+        +add_pet_info(pet)
+        +add_task(task)
+        +remove_task(task)
+        +update_preferences(preferences)
+    }
+
+    class Pet {
+        +str name
+        +float weight
+        +str color
+        +str breed
+        +snack_time(weight)
+        +accommodations(breed)
+        +get_daily_needs()
+    }
+
+    class Task {
+        +dict info
+        +int duration
+        +str priority
+        +set_priority(priority)
+        +estimate_duration()
+        +is_high_priority()
+    }
+
+    class Scheduler {
+        +dict constraints
+        +dict priorities
+        +daily_plan(constraint)
+        +sort_tasks()
+        +check_conflicts()
+        +explain_plan()
+    }
+
+    Owner "1" --> "0..*" Pet : has
+    Owner "1" --> "0..*" Task : manages
+    Scheduler "1" --> "0..*" Task : orders
+    Scheduler --> Pet : plans for
