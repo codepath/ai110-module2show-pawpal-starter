@@ -5,12 +5,20 @@
 **a. Initial design**
 
 - Briefly describe your initial UML design.
+
+My initial UML design incorporates the four main components as an individual class for my pet care app that checks each requirement on what it's supposed to accomplish, which is to be a smart pet care management system that helps owners keep their furry friends happy and healthy. 
+
 - What classes did you include, and what responsibilities did you assign to each?
+As stated earlier, I included four classes that individually represent each main component for the app. For instance, the responsibilities in the Pet class is updating its profile and getting what it needs on a daily schedule. Then, the Owner class has responsibilites for removing tasks, updating their pet's preferences, and receiving a summary of tasks in the form of a schedule. Next, the Task class contains responsibilities to set priorities and time durations of the tasks needed to be complete for their pet on a daily basis to keep them happy and healthy. Finally, the Scheduler class contains responsibilities for sorting tasks, checking conflicts, and providing explanation to the owner so that the pet's schedule accomodates with the owner's lifestyle for the schedule to work.
+
 
 **b. Design changes**
 
 - Did your design change during implementation?
+Yes, my design did change during implementation. 
+
 - If yes, describe at least one change and why you made it.
+One change I made is adding the relationships between Scheduler and Task, and Scheduler and Pet. This change was very necessary because the Scheduler class can build a plan accordingly with adding tasks while following constraints based on a pet's information provided by the owner.
 
 ---
 

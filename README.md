@@ -54,6 +54,14 @@ Paste a sample of your app's CLI or Streamlit output here so a reader can see wh
 #   ...
 ```
 
+Terminal Output:
+Today's Schedule
+Today's plan:
+- Morning walk (daily) at 08:00
+- Litter box cleaning (daily) at 09:00
+- Vet checkup (once) at 10:00
+
+
 ## 🧪 Testing PawPal+
 
 ```bash
