@@ -80,14 +80,14 @@ Sample test output:
 
 ## 📐 Smarter Scheduling
 
-> Fill in once you've implemented scheduling logic.
+The scheduler now supports a small set of planning behaviors that help turn a raw task list into a more useful daily plan.
 
 | Feature | Method(s) | Notes |
 |---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+| Sorting behavior | `Scheduler.sort_tasks()` | Orders pending tasks by frequency and priority so higher-urgency tasks are planned first. |
+| Filtering behavior | `Scheduler.filter_tasks()` | Returns tasks based on completion status and/or pet name so the planner can focus on the right subset. |
+| Conflict detection logic | `Scheduler.check_conflicts()` and `Scheduler.lightweight_conflict_check()` | Detects tasks that share the same time slot and returns a warning when conflicts or invalid times are found. |
+| Recurring task logic | `Task._next_due_date()`, `Task.create_next_occurrence()`, and `Task.mark_complete()` | Handles recurring daily and weekly tasks by generating the next occurrence when a task is completed. |
 
 ## 📸 Demo Walkthrough
 

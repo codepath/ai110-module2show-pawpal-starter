@@ -106,7 +106,13 @@ max_tasks = st.number_input("Max tasks in plan (0 = no limit)", min_value=0, val
 if st.button("Generate schedule"):
     scheduler = Scheduler(owner, constraints={"max_tasks": max_tasks or None})
     plan = scheduler.daily_plan()
+    conflict_warning = scheduler.lightweight_conflict_check()
     conflicts = scheduler.check_conflicts()
+
+    if "Warning" in conflict_warning:
+        st.warning(conflict_warning)
+    else:
+        st.info(conflict_warning)
 
     if plan:
         st.write("Today's plan:")

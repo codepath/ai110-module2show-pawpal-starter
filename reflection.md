@@ -27,12 +27,18 @@ One change I made is adding the relationships between Scheduler and Task, and Sc
 **a. Constraints and priorities**
 
 - What constraints does your scheduler consider (for example: time, priority, preferences)?
+My scheduler considered the following constraints: priority, time, frequency, and preferences
+
 - How did you decide which constraints mattered most?
+I decided which constraints mattered most by priortizing on the app being open to all kinds of pet owners where they find the most helpful accomodations to make the best possible schedule for pet owners to follow by completing tasks to keeping their pets happy and healthy.
 
 **b. Tradeoffs**
 
 - Describe one tradeoff your scheduler makes.
+My scheduler made a tradeoff of only noticing overlapping times instead of trying to automatically reschedule conflicts as well.
+
 - Why is that tradeoff reasonable for this scenario?
+The tradeoff is reasonable for this scenario because my Scheduler is transparent, fast, and predictable in ensuring the pet owner can complete the tasks assigned in the schedule for their pet, such as having the highest priority and enough time to complete a certain task for their pet. Thus, the tradeoff is reasonable for producing a sensible daily plan from the required constraints. 
 
 ---
 

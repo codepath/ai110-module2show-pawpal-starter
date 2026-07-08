@@ -6,6 +6,8 @@
 - Scheduler: the "brain" -- retrieves, organizes, and manages tasks across pets.
 """
 
+from datetime import date, timedelta
+
 from dataclasses import field
 
 
@@ -19,6 +21,7 @@ class Task:
         info: dict | None = None,
         duration: int | None = None,
         priority: str | None = None,
+        due_date: date | None = None,
     ):
         """Initialize a task with the provided details and status."""
         if info is not None or duration is not None or priority is not None:
@@ -29,6 +32,7 @@ class Task:
             self.completed = completed
             self.duration = duration if duration is not None else 0
             self.priority = priority.lower() if isinstance(priority, str) else "medium"
+            self.due_date = due_date if due_date is not None else self.info.get("due_date")
         else:
             self.description = description or ""
             self.time = time or ""
@@ -37,10 +41,46 @@ class Task:
             self.info = {"title": self.description, "time": self.time, "frequency": self.frequency}
             self.duration = 0
             self.priority = "medium"
+            self.due_date = due_date
+
+        if self.due_date is None:
+            self.due_date = date.today()
+
+        self.info.setdefault("due_date", self.due_date)
+
+    def _next_due_date(self):
+        """Return the next due date for recurring tasks."""
+        if self.frequency is None:
+            return None
+
+        frequency = self.frequency.lower()
+        if frequency == "daily":
+            return self.due_date + timedelta(days=1)
+        if frequency == "weekly":
+            return self.due_date + timedelta(days=7)
+        return None
+
+    def create_next_occurrence(self):
+        """Create the next task instance for recurring schedules."""
+        next_due_date = self._next_due_date()
+        if next_due_date is None:
+            return None
+
+        return Task(
+            description=self.description,
+            time=self.time,
+            frequency=self.frequency,
+            completed=False,
+            info={**self.info, "title": self.description, "time": self.time, "frequency": self.frequency},
+            duration=self.duration,
+            priority=self.priority,
+            due_date=next_due_date,
+        )
 
     def mark_complete(self):
-        """Mark the task as completed."""
+        """Mark the task as completed and return the next occurrence if recurring."""
         self.completed = True
+        return self.create_next_occurrence()
 
     def mark_incomplete(self):
         """Mark the task as incomplete."""
@@ -153,21 +193,59 @@ class Scheduler:
         self.tasks = []
 
     def get_all_tasks(self):
-        """Return all tasks available to the scheduler."""
+        """Return all tasks available to the scheduler.
+
+        If an owner is attached, return the combined tasks from the owner and all pets.
+        Otherwise return the scheduler's own standalone task list.
+        """
         if self.owner is None:
             return list(self.tasks)
         return self.owner.get_all_tasks()
 
     def get_tasks_by_pet(self, pet: Pet):
-        """Return the tasks associated with a specific pet."""
+        """Return the tasks associated with a specific pet.
+
+        This helper exposes the pet's own task list for per-pet filtering or display.
+        """
         return pet.get_tasks()
 
     def get_pending_tasks(self):
-        """Return all unfinished tasks from the scheduler's task list."""
+        """Return all unfinished tasks currently available to the scheduler.
+
+        Pending tasks are those whose completed flag is False.
+        """
         return [task for task in self.get_all_tasks() if not task.completed]
 
+    def filter_tasks(self, completed: bool | None = None, pet_name: str | None = None):
+        """Return tasks matching the given completion status and/or pet name.
+
+        If pet_name is provided, only tasks for that pet are returned.
+        If completed is provided, tasks are filtered by their completion state.
+        """
+        if pet_name is not None:
+            if self.owner is None:
+                tasks = []
+            else:
+                tasks = [
+                    task
+                    for pet in self.owner.pets
+                    if pet.name == pet_name
+                    for task in pet.get_tasks()
+                ]
+        else:
+            tasks = self.get_all_tasks()
+
+        if completed is not None:
+            tasks = [task for task in tasks if task.completed == completed]
+
+        return tasks
+
     def sort_tasks(self, tasks: list[Task] | None = None):
-        """Sort tasks by frequency and priority for planning."""
+        """Sort tasks by frequency and priority for planning.
+
+        Higher-frequency tasks and higher-priority tasks are placed first to form a
+        more urgent daily plan.
+        """
         task_list = tasks if tasks is not None else self.get_pending_tasks()
         return sorted(
             task_list,
@@ -178,8 +256,33 @@ class Scheduler:
             reverse=True,
         )
 
+    def sort_by_time(self, tasks: list[Task] | None = None):
+        """Sort tasks by their time attribute in ascending HH:MM order.
+
+        Tasks with invalid or missing times are pushed to the end of the result.
+        """
+        task_list = tasks if tasks is not None else self.get_pending_tasks()
+        return sorted(
+            task_list,
+            key=lambda task: self._time_sort_key(getattr(task, "time", "")),
+        )
+
+    def _time_sort_key(self, time_value: str):
+        """Convert an HH:MM time string into a comparable tuple.
+
+        Returns (hour, minute) or a sentinel value for missing/invalid times.
+        """
+        normalized_time = self._normalize_time(time_value)
+        if normalized_time is None:
+            return (24, 60)
+        return normalized_time
+
     def daily_plan(self, constraint: dict | None = None):
-        """Create a daily plan limited by the provided constraints."""
+        """Create a daily plan limited by the provided constraints.
+
+        The plan is generated from pending tasks ordered by frequency and priority.
+        If a max_tasks constraint is present, the returned list is truncated.
+        """
         constraint = constraint if constraint is not None else self.constraints
         plan = self.sort_tasks()
         max_tasks = constraint.get("max_tasks")
@@ -187,19 +290,88 @@ class Scheduler:
             plan = plan[:max_tasks]
         return plan
 
+    def _normalize_time(self, time_value: str):
+        """Convert an HH:MM time string into a comparable tuple.
+
+        Supports string-formatted times and numeric hour values. Raises on invalid formats.
+        """
+        if not time_value:
+            return None
+
+        if isinstance(time_value, (int, float)):
+            return (int(time_value), 0)
+
+        if not isinstance(time_value, str):
+            raise ValueError("Task time must be a string")
+
+        parts = time_value.split(":", 1)
+        if len(parts) != 2:
+            raise ValueError(f"Invalid time format: {time_value}")
+
+        hour_text, minute_text = parts
+        hour = int(hour_text)
+        minute = int(minute_text)
+        if not (0 <= hour <= 23 and 0 <= minute <= 59):
+            raise ValueError(f"Invalid time values: {time_value}")
+
+        return (hour, minute)
+
     def check_conflicts(self):
-        """Find tasks that share the same time slot."""
-        seen = {}
-        conflicts = []
+        """Find tasks sharing the same time slot across pets or within the same pet.
+
+        Tasks are grouped by normalized time and any pair sharing the same slot is
+        returned as a conflict tuple.
+        """
+        tasks_by_time = {}
         for task in self.get_all_tasks():
-            if task.time in seen:
-                conflicts.append((seen[task.time], task))
-            else:
-                seen[task.time] = task
+            try:
+                normalized_time = self._normalize_time(getattr(task, "time", ""))
+            except (TypeError, ValueError):
+                continue
+
+            if normalized_time is None:
+                continue
+
+            tasks_by_time.setdefault(normalized_time, []).append(task)
+
+        conflicts = []
+        for task_group in tasks_by_time.values():
+            if len(task_group) < 2:
+                continue
+
+            for index, task in enumerate(task_group):
+                for other_task in task_group[index + 1 :]:
+                    conflicts.append((task, other_task))
+
         return conflicts
 
+    def lightweight_conflict_check(self):
+        """Return a warning message instead of raising when conflict checks fail.
+
+        Validates task time formats first, then runs conflict detection. If any
+        invalid times are found, a warning is returned rather than raising an exception.
+        """
+        try:
+            tasks = self.get_all_tasks()
+            for task in tasks:
+                self._normalize_time(getattr(task, "time", ""))
+        except (TypeError, ValueError):
+            return "Warning: conflict check could not validate the schedule because one or more task times are invalid."
+
+        try:
+            conflicts = self.check_conflicts()
+        except (TypeError, ValueError):
+            return "Warning: conflict check could not validate the schedule because one or more task times are invalid."
+
+        if conflicts:
+            return f"Warning: possible scheduling conflict detected for {len(conflicts)} task pairing(s)."
+        return "No scheduling conflicts detected."
+
     def explain_plan(self):
-        """Return a human-readable summary of the current plan."""
+        """Return a human-readable summary of the current plan.
+
+        Generates a text summary of the daily plan produced by the scheduler.
+        """
         plan = self.daily_plan()
         if not plan:
             return "No pending tasks to schedule."
@@ -207,6 +379,9 @@ class Scheduler:
         return "Today's plan:\n" + "\n".join(lines)
 
     def priority_rank(self, priority: str):
-        """Convert a priority label into a sortable rank."""
+        """Convert a priority label into a sortable rank.
+
+        Higher numbers represent more urgent priority levels for task ordering.
+        """
         rank_map = {"high": 3, "medium": 2, "low": 1}
         return rank_map.get(priority.lower(), 0)
