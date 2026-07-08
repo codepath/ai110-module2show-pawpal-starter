@@ -79,22 +79,54 @@ if owner.pets:
 else:
     st.info("Add a pet first to start creating tasks.")
 
-all_tasks = owner.get_all_tasks()
-if all_tasks:
-    st.write("Current tasks:")
-    st.table(
-        [
-            {
-                "description": t.description,
-                "time": t.time,
-                "frequency": t.frequency,
-                "priority": t.priority,
-                "duration_minutes": t.duration,
-                "completed": t.completed,
-            }
-            for t in all_tasks
-        ]
-    )
+def pet_name_for_task(task: Task) -> str:
+    for pet in owner.pets:
+        if task in pet.get_tasks():
+            return pet.name
+    return "Unassigned"
+
+
+def task_rows(tasks: list[Task]) -> list[dict]:
+    return [
+        {
+            "pet": pet_name_for_task(t),
+            "description": t.description,
+            "time": t.time,
+            "frequency": t.frequency,
+            "priority": t.priority,
+            "duration_minutes": t.duration,
+            "completed": "✅" if t.completed else "⏳",
+        }
+        for t in tasks
+    ]
+
+
+scheduler = Scheduler(owner)
+
+st.write("Current tasks:")
+if scheduler.get_all_tasks():
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        pet_filter = st.selectbox("Filter by pet", ["All"] + [pet.name for pet in owner.pets])
+    with col2:
+        status_filter = st.selectbox("Filter by status", ["All", "Pending", "Completed"])
+    with col3:
+        sort_by = st.selectbox("Sort by", ["Priority & frequency", "Time"])
+
+    completed_arg = {"Pending": False, "Completed": True}.get(status_filter)
+    pet_arg = None if pet_filter == "All" else pet_filter
+    filtered_tasks = scheduler.filter_tasks(completed=completed_arg, pet_name=pet_arg)
+
+    if sort_by == "Time":
+        display_tasks = scheduler.sort_by_time(filtered_tasks)
+    else:
+        display_tasks = scheduler.sort_tasks(filtered_tasks)
+
+    if display_tasks:
+        st.table(task_rows(display_tasks))
+        st.success(f"Showing {len(display_tasks)} task(s) matching your filters.")
+    else:
+        st.info("No tasks match the selected filters.")
 else:
     st.info("No tasks yet. Add one above.")
 
@@ -104,26 +136,31 @@ st.subheader("Build Schedule")
 max_tasks = st.number_input("Max tasks in plan (0 = no limit)", min_value=0, value=0)
 
 if st.button("Generate schedule"):
-    scheduler = Scheduler(owner, constraints={"max_tasks": max_tasks or None})
-    plan = scheduler.daily_plan()
-    conflict_warning = scheduler.lightweight_conflict_check()
-    conflicts = scheduler.check_conflicts()
-
-    if "Warning" in conflict_warning:
-        st.warning(conflict_warning)
-    else:
-        st.info(conflict_warning)
+    plan_scheduler = Scheduler(owner, constraints={"max_tasks": max_tasks or None})
+    plan = plan_scheduler.daily_plan()
+    conflicts = plan_scheduler.check_conflicts()
 
     if plan:
-        st.write("Today's plan:")
-        for task in plan:
-            st.markdown(
-                f"- **{task.description}** at {task.time} ({task.frequency}, {task.priority} priority)"
-            )
+        st.success(f"Today's plan is ready with {len(plan)} task(s).")
+        st.table(task_rows(plan))
     else:
         st.info("No pending tasks to schedule.")
 
     if conflicts:
-        st.warning(f"{len(conflicts)} time conflict(s) detected.")
-        for task_a, task_b in conflicts:
-            st.markdown(f"- {task_a.description} and {task_b.description} both at {task_a.time}")
+        st.warning(
+            f"⚠️ {len(conflicts)} scheduling conflict(s) found — some pets need care at the same time. "
+            "Review the pairings below and consider adjusting one task's time so you're not needed in two places at once."
+        )
+        conflict_rows = [
+            {
+                "time": task_a.time,
+                "pet 1": pet_name_for_task(task_a),
+                "task 1": task_a.description,
+                "pet 2": pet_name_for_task(task_b),
+                "task 2": task_b.description,
+            }
+            for task_a, task_b in conflicts
+        ]
+        st.table(conflict_rows)
+    else:
+        st.success("No scheduling conflicts detected — your plan is good to go!")

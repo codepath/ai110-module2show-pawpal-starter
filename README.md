@@ -102,12 +102,60 @@ The scheduler now supports a small set of planning behaviors that help turn a ra
 
 ## 📸 Demo Walkthrough
 
-Describe your app in numbered steps so a reader can follow along without watching a video:
+PawPal+ is designed as a simple, guided pet-care planning experience. In the Streamlit interface, a user can:
 
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
+1. Enter an owner name and add one or more pets with basic details such as name, weight, color, and breed.
+2. Create care tasks for each pet, including a title, time, frequency, priority, and duration.
+3. Review all tasks in a sortable and filterable list, then generate a daily schedule from the pending items.
+4. See conflict warnings when multiple tasks are assigned to the same time slot and adjust the plan accordingly.
+5. Use the generated plan as a daily checklist for pet care routines.
 
-**Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
+Example workflow:
+
+1. Add a pet such as "Mochi" and enter the pet's details.
+2. Create a task like "Morning walk" for that pet, set the time to 08:00, and choose a daily frequency with high priority.
+3. Add another task such as "Feeding" and generate the daily schedule.
+4. Review the resulting plan, inspect the task list, and use the scheduler's conflict warnings to spot overlapping care times.
+
+The scheduler demonstrates several behaviors during this flow:
+
+- Sorting by priority and frequency to place the most urgent tasks first.
+- Sorting by time to show tasks in chronological order.
+- Filtering by pet name and completion status to focus on specific tasks.
+- Conflict detection for overlapping time slots.
+- Recurring task support for daily and weekly tasks that can generate future occurrences.
+
+Sample CLI output from running the current demo script:
+
+```text
+Today's Schedule
+Today's plan:
+- Evening walk (daily) at 18:30
+- Morning walk (daily) at 08:00
+- Feeding (daily) at 07:30
+- Litter box cleaning (daily) at 09:00
+- Grooming (weekly) at 14:00
+- Vet checkup (once) at 10:00
+- Nail trimming (once) at 10:00
+
+All Tasks Sorted by Time
+- Feeding at 07:30 (daily) - pending
+- Morning walk at 08:00 (daily) - pending
+- Litter box cleaning at 09:00 (daily) - pending
+- Vet checkup at 10:00 (once) - pending
+- Nail trimming at 10:00 (once) - pending
+- Grooming at 14:00 (weekly) - pending
+- Evening walk at 18:30 (daily) - pending
+
+Schedule Conflicts
+- Vet checkup and Nail trimming both at 10:00
+```
+
+## Features
+
+1. Priority-aware planning: Tasks are ranked by frequency and priority so the most urgent care items are surfaced first in the daily plan.
+2. Sorting by time: Tasks can be ordered chronologically by their scheduled time, making it easier to review the day’s routine.
+3. Conflict warnings: The scheduler detects tasks that share the same time slot and highlights potential scheduling conflicts.
+4. Recurring task support: Daily and weekly tasks can generate the next occurrence when marked complete, supporting simple recurring schedules.
+5. Pet and status filtering: Tasks can be filtered by pet name and completion status to focus on specific animals or pending work.
+6. Flexible daily planning: The planner can generate a daily schedule and optionally limit the number of tasks included in the plan.
