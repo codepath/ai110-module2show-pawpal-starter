@@ -1,0 +1,69 @@
+classDiagram
+    class Task {
+        +str description
+        +str time
+        +str frequency
+        +bool completed
+        +dict info
+        +int duration
+        +str priority
+        +date due_date
+        +_next_due_date()
+        +create_next_occurrence()
+        +mark_complete()
+        +mark_incomplete()
+        +toggle_complete()
+    }
+
+    class Pet {
+        +str name
+        +float weight
+        +str color
+        +str breed
+        +List~Task~ tasks
+        +add_task(task)
+        +remove_task(task)
+        +get_tasks()
+        +get_pending_tasks()
+        +snack_time()
+        +accommodations()
+        +get_daily_needs()
+    }
+
+    class Owner {
+        +dict info
+        +List~Pet~ pets
+        +List~Task~ tasks
+        +add_pet(pet)
+        +add_pet_info(pet)
+        +remove_pet(pet)
+        +add_task(task)
+        +remove_task(task)
+        +get_all_tasks()
+        +update_preferences(preferences)
+    }
+
+    class Scheduler {
+        +Owner owner
+        +dict constraints
+        +dict priorities
+        +List~Task~ tasks
+        +get_all_tasks()
+        +get_tasks_by_pet(pet)
+        +get_pending_tasks()
+        +filter_tasks(completed, pet_name)
+        +sort_tasks(tasks)
+        +sort_by_time(tasks)
+        +daily_plan(constraint)
+        +check_conflicts()
+        +lightweight_conflict_check()
+        +explain_plan()
+        +priority_rank(priority)
+    }
+
+    Owner "1" o-- "0..*" Pet : owns
+    Pet "1" *-- "0..*" Task : contains
+    Owner "1" --> "0..*" Task : tracks standalone tasks
+    Scheduler "1" --> "0..*" Owner : uses
+    Scheduler "1" --> "0..*" Task : organizes
+    Task --> Task : creates next occurrence
