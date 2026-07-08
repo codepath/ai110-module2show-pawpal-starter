@@ -4,6 +4,48 @@
 
 **a. Initial design**
 
+Three actions:
+- Add a pet
+- Add a task for a pet
+- Mark task as complete
+
+Objects
+- Owner
+  -  Attributes
+      -  name 
+      -  pets
+  -  Methods  
+      - add pet for owner  
+      - Remove a pet
+      - get all tasks
+      - get pets
+    
+- Pet
+    -  Attributes
+       - name
+       - breed
+       - schedule
+  -  Methods  
+      - add name for pet
+      - add task
+      - remove task
+      - get tasks
+      - get incomplete tasks     
+- Schedule
+    -  Attributes
+        task
+        time
+    -  Methods
+        - Add a task
+        - Remove a task    
+- Task
+    -  Attributes
+       - name
+       - done or not
+    -  Methods
+       - mark complete
+       - return status
+
 - Briefly describe your initial UML design.
 - What classes did you include, and what responsibilities did you assign to each?
 
