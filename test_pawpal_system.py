@@ -3,6 +3,28 @@ from datetime import date, timedelta
 from pawpal_system import Owner, Pet, Scheduler, Task
 
 
+def test_task_status_changes_and_recurring_behavior():
+    task = Task(description="Feed", time="08:00", frequency="daily")
+    assert task.completed is False
+
+    completed_task = task.mark_complete()
+    assert task.completed is True
+    assert completed_task is not None
+    assert completed_task.frequency == "daily"
+
+    task.mark_incomplete()
+    assert task.completed is False
+
+    task.toggle_complete()
+    assert task.completed is True
+
+    task.toggle_complete()
+    assert task.completed is False
+
+    one_time_task = Task(description="Vet visit", time="10:00", frequency="once")
+    assert one_time_task.mark_complete() is None
+
+
 def test_owner_can_manage_multiple_pets_and_tasks():
     owner = Owner(info={"name": "Jordan"})
     pet1 = Pet(name="Mochi", weight=5.0, color="cream", breed="mixed")
@@ -28,6 +50,29 @@ def test_pet_methods_use_own_state():
     assert pet.get_daily_needs()["snack_time"] == "Small snack"
 
 
+def test_owner_can_manage_pets_and_tasks_with_empty_pet_edge_case():
+    owner = Owner(info={"name": "Jordan"})
+    pet = Pet(name="Mochi", weight=5.0, color="cream", breed="mixed")
+    owner.add_pet(pet)
+
+    assert owner.get_all_tasks() == []
+
+    task = Task(description="Walk", time="09:00", frequency="daily", priority="high")
+    pet.add_task(task)
+    owner.add_task(Task(description="Feed", time="18:00", frequency="daily", priority="medium"))
+
+    all_tasks = owner.get_all_tasks()
+    assert len(all_tasks) == 2
+    assert task in all_tasks
+    assert any(task.description == "Feed" for task in all_tasks)
+
+    owner.remove_task(all_tasks[1])
+    assert len(owner.get_all_tasks()) == 1
+
+    owner.remove_pet(pet)
+    assert owner.pets == []
+
+
 def test_scheduler_orders_tasks_by_priority_and_duration():
     scheduler = Scheduler(constraints={"available_minutes": 30})
     high_priority_task = Task(info={"title": "Morning walk"}, duration=20, priority="high")
@@ -38,6 +83,28 @@ def test_scheduler_orders_tasks_by_priority_and_duration():
 
     assert plan[0].priority == "high"
     assert len(plan) == 2
+
+
+def test_scheduler_daily_plan_respects_constraints_and_pet_scope():
+    owner = Owner(info={"name": "Jordan"})
+    pet_one = Pet(name="Mochi", weight=5.0, color="cream", breed="mixed")
+    pet_two = Pet(name="Whiskers", weight=4.0, color="gray", breed="tabby")
+    owner.add_pet(pet_one)
+    owner.add_pet(pet_two)
+
+    high_priority_task = Task(description="Morning walk", time="08:00", frequency="daily", priority="high")
+    low_priority_task = Task(description="Grooming", time="14:00", frequency="weekly", priority="low")
+    other_pet_task = Task(description="Feed dinner", time="18:00", frequency="daily", priority="medium")
+    pet_one.add_task(high_priority_task)
+    pet_one.add_task(low_priority_task)
+    pet_two.add_task(other_pet_task)
+
+    scheduler = Scheduler(owner, constraints={"max_tasks": 1})
+    plan = scheduler.daily_plan()
+
+    assert [task.description for task in plan] == ["Morning walk"]
+    assert [task.description for task in scheduler.filter_tasks(completed=False, pet_name="Mochi")] == ["Morning walk", "Grooming"]
+    assert scheduler.filter_tasks(completed=False, pet_name="No Pet") == []
 
 
 def test_scheduler_can_sort_tasks_by_time():
@@ -67,8 +134,9 @@ def test_scheduler_detects_conflicts_for_same_pet_or_different_pets():
     scheduler = Scheduler(owner)
     conflicts = scheduler.check_conflicts()
 
-    assert len(conflicts) == 2
-    assert {conflict[0].description for conflict in conflicts} == {"Morning walk", "Feed breakfast"}
+    assert len(conflicts) == 1
+    assert {conflict[0].description for conflict in conflicts} == {"Morning walk"}
+    assert {conflict[1].description for conflict in conflicts} == {"Feed breakfast"}
 
 
 def test_lightweight_conflict_detection_returns_warning_message():

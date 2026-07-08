@@ -168,9 +168,15 @@ class Owner:
         self.tasks.append(task)
 
     def remove_task(self, task: Task):
-        """Remove a task from the owner's standalone task list."""
+        """Remove a task from the owner's standalone list or from one of the pets."""
         if task in self.tasks:
             self.tasks.remove(task)
+            return
+
+        for pet in self.pets:
+            if task in pet.get_tasks():
+                pet.remove_task(task)
+                return
 
     def get_all_tasks(self):
         """Return all tasks owned by the owner and their pets."""

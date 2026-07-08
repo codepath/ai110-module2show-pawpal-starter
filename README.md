@@ -64,19 +64,30 @@ Today's plan:
 
 ## 🧪 Testing PawPal+
 
-```bash
-# Run the full test suite:
-pytest
+'''
+Run the full test suite:
+python3 -m pytest
 
-# Run with coverage:
-pytest --cov
-```
+Brief description of my tests:
+My tests cover the core behavior of the PawPal system as they verify the main scheduling and task-management logic in my pet care app. 
 
-Sample test output:
+Terminal Pytest Output:
+========================================== test session starts ==========================================
+platform darwin -- Python 3.14.2, pytest-9.1.1, pluggy-1.6.0
+rootdir: /Users/gerardorivera/ai110-module2show-pawpal-starter
+plugins: anyio-4.14.0
+collected 20 items                                                                                      
 
-```
-# Paste your pytest output here
-```
+test_pawpal_system.py ...........                                                                 [ 55%]
+tests/test_pawpal.py .........                                                                    [100%]
+
+========================================== 20 passed in 0.06s ===========================================
+
+Confidence Level:
+4 stars
+'''
+
+
 
 ## 📐 Smarter Scheduling
 
