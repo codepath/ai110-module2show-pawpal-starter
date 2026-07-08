@@ -1,15 +1,96 @@
 classDiagram
-    %% Replace the placeholders below with your actual classes, attributes, methods, and relationships.
-    %% Keep this file updated so it matches your final implementation.
-
-    class ClassName {
-        +type attribute
-        +method() returnType
+    class Pet {
+        +str id
+        +str name
+        +str species
+        +str breed
+        +float age_years
+        +float weight_kg
+        +list~str~ medical_conditions
+        +list~Task~ tasks
     }
 
-    class AnotherClass {
-        +type attribute
-        +method() returnType
+    class Task {
+        +str id
+        +str name
+        +TaskType task_type
+        +Priority priority
+        +int duration_minutes
+        +Frequency frequency
+        +datetime last_done
+        +str notes
+        +bool is_active
+        +is_due(as_of datetime) bool
+        +hours_overdue(as_of datetime) float
+        +next_due_at() datetime
     }
 
-    ClassName --> AnotherClass : relationship
+    class OwnerPreferences {
+        +str name
+        +int available_minutes
+        +int preferred_morning_minutes
+        +int preferred_evening_minutes
+        +str notes
+    }
+
+    class ScheduledTask {
+        +Task task
+        +str time_slot
+        +float score
+        +str reason
+    }
+
+    class DailyPlan {
+        +date plan_date
+        +Pet pet
+        +OwnerPreferences owner
+        +list~ScheduledTask~ scheduled
+        +list~Task~ skipped
+        +list~Task~ not_due
+        +int total_minutes_used
+        +str overall_reasoning
+    }
+
+    class scheduler {
+        <<module>>
+        +score_task(task, as_of) float
+        +generate_plan(pet, prefs, date) DailyPlan
+    }
+
+    class TaskType {
+        <<enumeration>>
+        WALK
+        FEEDING
+        MEDICATION
+        ENRICHMENT
+        GROOMING
+        VET_VISIT
+        TRAINING
+    }
+
+    class Priority {
+        <<enumeration>>
+        CRITICAL = 5
+        HIGH = 4
+        MEDIUM = 3
+        LOW = 2
+        OPTIONAL = 1
+    }
+
+    class Frequency {
+        <<enumeration>>
+        MULTIPLE_DAILY = 8
+        DAILY = 24
+        EVERY_OTHER_DAY = 48
+        WEEKLY = 168
+        MONTHLY = 720
+    }
+
+    Pet "1" --> "0..*" Task : has tasks
+    DailyPlan --> Pet : plan for
+    DailyPlan "1" --> "0..*" ScheduledTask : contains
+    ScheduledTask --> Task : wraps
+    scheduler ..> DailyPlan : produces
+    Task --> TaskType : typed by
+    Task --> Priority : typed by
+    Task --> Frequency : typed by
