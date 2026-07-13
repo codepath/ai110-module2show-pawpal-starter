@@ -85,10 +85,10 @@ Sample test output:
 
 Describe your app in numbered steps so a reader can follow along without watching a video:
 
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
+1. I enter my name and my pet's name and species.
+2. I set how much time I have today and what time my day starts.
+3. I add tasks one by one, giving each a title, duration, and priority.
+4. I hit "Generate schedule" and PawPal+ sorts tasks by priority, then fits as many as it can into my time budget.
+5. It shows me the finished schedule with start/end times and a short reason for each task (why it made the cut or why it got skipped).
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
