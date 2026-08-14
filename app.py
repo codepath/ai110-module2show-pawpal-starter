@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import List
 
-import streamlit as st
+from pawpal_runner import st
 
 PRIORITY_RANK = {"high": 0, "medium": 1, "low": 2}
 
