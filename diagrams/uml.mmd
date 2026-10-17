@@ -1,15 +1,65 @@
 classDiagram
-    %% Replace the placeholders below with your actual classes, attributes, methods, and relationships.
-    %% Keep this file updated so it matches your final implementation.
-
-    class ClassName {
-        +type attribute
-        +method() returnType
+    class TaskType {
+        <<enumeration>>
+        WALK
+        FEED
+        VET
     }
 
-    class AnotherClass {
-        +type attribute
-        +method() returnType
+    class Recurrence {
+        <<enumeration>>
+        DAILY
+        WEEKLY
     }
 
-    ClassName --> AnotherClass : relationship
+    class Owner {
+        +str first_name
+        +str last_name
+        +int age
+        +List~Pet~ pets
+        +add_pet(pet) void
+        +get_all_tasks() List~Task~
+    }
+
+    class Pet {
+        +str name
+        +int age
+        +str gender
+        +str animal_type
+        +List~Task~ tasks
+        +add_task(task) void
+    }
+
+    class Task {
+        +TaskType task_type
+        +datetime due_time
+        +Pet pet
+        +str description
+        +int duration_minutes
+        +int priority
+        +Recurrence recurrence
+        +bool completed
+        +mark_complete(today) Task
+        +overlaps(other) bool
+        +end_time datetime
+    }
+
+    class Scheduler {
+        +Owner owner
+        +get_daily_schedule(day) List~Task~
+        +sort_by_time(tasks) List~Task~
+        +filter_tasks(pet_name, completed, task_type) List~Task~
+        +get_pending_tasks() List~Task~
+        +complete_task(task) Task
+        +find_conflicts() List~Task_pair~
+        +conflicts_with(task) List~Task~
+        +get_conflict_warnings() List~str~
+    }
+
+    Owner "1" --> "*" Pet : owns
+    Pet "1" --> "*" Task : has
+    Task "*" --> "1" Pet : belongs to
+    Task --> TaskType
+    Task --> Recurrence
+    Scheduler "1" --> "1" Owner : schedules for
+    Scheduler ..> Task : reads via owner.get_all_tasks()

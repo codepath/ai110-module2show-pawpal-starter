@@ -1,0 +1,73 @@
+classDiagram
+    direction LR
+
+    class TaskType {
+        <<enumeration>>
+        WALK
+        FEED
+        VET
+    }
+
+    class Recurrence {
+        <<enumeration>>
+        DAILY
+        WEEKLY
+        +interval() timedelta
+    }
+
+    class Task {
+        +TaskType task_type
+        +datetime due_time
+        +Pet pet
+        +str description
+        +int duration_minutes
+        +int priority
+        +Recurrence recurrence
+        +bool completed
+        +datetime end_time
+        +mark_complete(today) Task
+        +overlaps(other) bool
+    }
+
+    class Pet {
+        +str name
+        +int age
+        +str gender
+        +str animal_type
+        +List~Task~ tasks
+        +add_task(task) void
+    }
+
+    class Owner {
+        +str first_name
+        +str last_name
+        +int age
+        +List~Pet~ pets
+        +add_pet(pet) void
+        +get_all_tasks() List~Task~
+    }
+
+    class Scheduler {
+        +Owner owner
+        +sort_by_time(tasks)$ List~Task~
+        +filter_tasks(pet_name, completed, task_type) List~Task~
+        +get_daily_schedule(day) List~Task~
+        +get_pending_tasks() List~Task~
+        +complete_task(task) Task
+        +find_conflicts() List~tuple~
+        +conflicts_with(task) List~Task~
+        +get_conflict_warnings() List~str~
+    }
+
+    %% Structure: Owner -> Pet -> Task, with Task keeping a back-reference to its Pet
+    Owner "1" *-- "*" Pet : owns
+    Pet "1" *-- "*" Task : has
+    Task "*" --> "0..1" Pet : pet (set by add_task)
+    Task --> TaskType : task_type
+    Task --> Recurrence : recurrence (optional)
+
+    %% Behavior: how the classes interact
+    Scheduler "1" --> "1" Owner : reads via get_all_tasks()
+    Scheduler ..> Task : sorts, filters, finds conflicts
+    Task ..> Task : mark_complete() creates next occurrence
+    Task ..> Pet : mark_complete() calls add_task()
