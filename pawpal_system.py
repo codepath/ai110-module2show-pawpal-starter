@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, timedelta
 
 PRIORITY_RANK = {"high": 3, "medium": 2, "low": 1}
@@ -74,6 +74,7 @@ class CareTask:
     priority: str = "medium"
     recurrence: str = "daily"
     last_completed: date | None = field(default=None, compare=False)
+    start_time: str | None = None
 
     def update_details(self, title=None, duration_minutes=None, priority=None, recurrence=None):
         """Update any provided fields; rolls back if the result would be invalid."""
@@ -92,13 +93,27 @@ class CareTask:
             raise ValueError("Updated task details are invalid.")
 
     def is_valid(self):
-        """Return True if title, duration, priority, and recurrence are all valid."""
+        """Return True if title, duration, priority, recurrence, and start time are all valid."""
         return (
             bool(self.title.strip())
             and self.duration_minutes > 0
             and self.priority in PRIORITY_RANK
             and self.recurrence in VALID_RECURRENCES
+            and (self.start_time is None or self.start_minutes is not None)
         )
+
+    @property
+    def start_minutes(self):
+        """Return start_time ("HH:MM") as minutes after midnight, or None if unset or malformed."""
+        if self.start_time is None:
+            return None
+        try:
+            hours, minutes = (int(part) for part in self.start_time.split(":"))
+        except ValueError:
+            return None
+        if 0 <= hours < 24 and 0 <= minutes < 60:
+            return hours * 60 + minutes
+        return None
 
     @property
     def priority_rank(self):
@@ -122,6 +137,10 @@ class CareTask:
         due = self.next_due_date()
         return due is not None and due <= (on or date.today())
 
+    def next_occurrence(self):
+        """Return a fresh, not-yet-completed copy of this task for its next period."""
+        return replace(self, last_completed=None)
+
 
 # -----------------------------------
 # CLASS 4: DailySchedule
@@ -135,11 +154,15 @@ class DailySchedule:
     remaining_minutes: int = 0
     reasons: dict[str, str] = field(default_factory=dict)
     skipped_tasks: list[CareTask] = field(default_factory=list)
+    conflicts: list[tuple[CareTask, CareTask]] = field(default_factory=list)
     schedule_date: date = field(default_factory=date.today)
 
     def generate(self, owner):
         """Build the plan for schedule_date: filter by due date, sort, then fit into the owner's time."""
-        # 1. Collect valid tasks without duplicates.
+        # 1. Replace completed recurring tasks that are due again with a new occurrence,
+        #    then collect valid tasks without duplicates.
+        self._roll_over(self.pet.care_tasks)
+        self._roll_over(self.tasks)
         candidates = []
         for task in self.pet.care_tasks + self.tasks:
             if task.is_valid() and task not in candidates:
@@ -188,6 +211,11 @@ class DailySchedule:
                     f"{self.remaining_minutes} min were left."
                 )
 
+        # 5. Order the final plan chronologically; untimed tasks follow in priority order.
+        self.scheduled_tasks.sort(
+            key=lambda t: (t.start_minutes is None, t.start_minutes or 0)
+        )
+        self.conflicts = Scheduler().detect_conflicts(self.scheduled_tasks)
         return self.scheduled_tasks
 
     def add_task(self, task):
@@ -207,7 +235,8 @@ class DailySchedule:
         if not self.scheduled_tasks:
             lines.append("  No tasks scheduled.")
         for task in self.scheduled_tasks:
-            lines.append(f"  - {task.title} ({task.duration_minutes} min) [priority: {task.priority}]")
+            time = f"{task.start_time} " if task.start_time else ""
+            lines.append(f"  - {time}{task.title} ({task.duration_minutes} min) [priority: {task.priority}]")
 
         if self.skipped_tasks:
             lines.append("Skipped:")
@@ -216,6 +245,16 @@ class DailySchedule:
 
         lines.append(f"Time remaining: {self.remaining_minutes} min")
         return "\n".join(lines)
+
+    def _roll_over(self, task_list):
+        """Swap completed recurring tasks that are due again for a fresh occurrence, in place."""
+        for i, task in enumerate(task_list):
+            if (
+                task.last_completed is not None
+                and task.recurrence != "once"
+                and task.is_due(self.schedule_date)
+            ):
+                task_list[i] = task.next_occurrence()
 
     @staticmethod
     def _not_due_reason(task):
@@ -231,3 +270,24 @@ class DailySchedule:
         """Return True if any owner preference appears in the task title."""
         title = task.title.lower()
         return any(pref in title for pref in owner.preferences)
+
+
+# -----------------------------------
+# Scheduler: time-slot conflict detection
+# -----------------------------------
+
+class Scheduler:
+    def detect_conflicts(self, tasks):
+        """Return (task_a, task_b) pairs whose start_time windows overlap."""
+        timed = sorted(
+            (t for t in tasks if t.start_minutes is not None),
+            key=lambda t: t.start_minutes,
+        )
+        conflicts = []
+        for i, a in enumerate(timed):
+            a_end = a.start_minutes + a.duration_minutes
+            for b in timed[i + 1:]:
+                if b.start_minutes >= a_end:
+                    break
+                conflicts.append((a, b))
+        return conflicts

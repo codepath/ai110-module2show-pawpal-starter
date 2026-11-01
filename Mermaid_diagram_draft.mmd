@@ -25,12 +25,15 @@ classDiagram
         +str priority
         +str recurrence
         +date last_completed
+        +str start_time
         +update_details(title, duration_minutes, priority, recurrence)
         +is_valid() bool
         +priority_rank() int
         +mark_complete(on)
         +next_due_date() date
         +is_due(on) bool
+        +start_minutes() int
+        +next_occurrence() CareTask
     }
 
     class DailySchedule {
@@ -41,10 +44,15 @@ classDiagram
         +dict reasons
         +list skipped_tasks
         +date schedule_date
+        +list conflicts
         +generate(owner) list
         +explain_task(task) str
         +get_summary() str
         +add_task(task)
+    }
+
+    class Scheduler {
+        +detect_conflicts(tasks) list
     }
 
     Owner "1" --> "0..*" Pet : owns
@@ -52,3 +60,4 @@ classDiagram
     Owner "1" --> "0..*" DailySchedule : generates
     DailySchedule "1" --> "1" Pet : schedules for
     DailySchedule "1" --> "0..*" CareTask : includes
+    DailySchedule ..> Scheduler : uses

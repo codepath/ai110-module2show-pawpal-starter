@@ -113,6 +113,7 @@ with col3:
     priority = st.selectbox("Priority", ["low", "medium", "high"], index=2)
 with col4:
     recurrence = st.selectbox("Recurrence", ["daily", "weekly", "once"])
+start_time = st.text_input("Start time (HH:MM, optional)", value="")
 
 if st.button("Add task"):
     try:
@@ -122,6 +123,7 @@ if st.button("Add task"):
                 duration_minutes=int(duration),
                 priority=priority,
                 recurrence=recurrence,
+                start_time=start_time.strip() or None,
             )
         )
     except ValueError as e:
@@ -131,6 +133,7 @@ if pet.care_tasks:
     st.table(
         [
             {
+                "start": t.start_time or "-",
                 "title": t.title,
                 "duration_minutes": t.duration_minutes,
                 "priority": t.priority,
@@ -175,6 +178,7 @@ if st.button("Generate schedule"):
             [
                 {
                     "order": i,
+                    "start": t.start_time or "-",
                     "title": t.title,
                     "duration_minutes": t.duration_minutes,
                     "priority": t.priority,
@@ -185,6 +189,9 @@ if st.button("Generate schedule"):
         )
     else:
         st.warning("No tasks fit in the available time.")
+
+    for a, b in schedule.conflicts:
+        st.warning(f"Time conflict: {a.title} ({a.start_time}) overlaps {b.title} ({b.start_time}).")
 
     not_due = [t for t in schedule.skipped_tasks if not t.is_due(schedule.schedule_date)]
     no_time = [t for t in schedule.skipped_tasks if t not in not_due]
