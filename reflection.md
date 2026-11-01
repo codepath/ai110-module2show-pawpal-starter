@@ -2,6 +2,11 @@
 
 ## 1. System Design
 
+The three most important things a user is able tio perform in this app are:
+- enter their own info as well as their pet details (e. name, species, etc.)
+- add specifications on pet's care like duration and order of importance.
+- create a daily care schedule with tasks ordered around time availabiulity and priorities for review
+
 **a. Initial design**
 
 - Briefly describe your initial UML design.
