@@ -1,0 +1,54 @@
+classDiagram
+    direction TB
+
+    class Owner {
+        +str name
+        +int available_minutes
+        +list preferences
+        +list pets
+        +update_preferences(preferences)
+        +set_available_time(minutes)
+        +add_pet(pet)
+    }
+
+    class Pet {
+        +str name
+        +str species
+        +list care_tasks
+        +add_task(task)
+        +remove_task(task)
+    }
+
+    class CareTask {
+        +str title
+        +int duration_minutes
+        +str priority
+        +str recurrence
+        +date last_completed
+        +update_details(title, duration_minutes, priority, recurrence)
+        +is_valid() bool
+        +priority_rank() int
+        +mark_complete(on)
+        +next_due_date() date
+        +is_due(on) bool
+    }
+
+    class DailySchedule {
+        +Pet pet
+        +list tasks
+        +list scheduled_tasks
+        +int remaining_minutes
+        +dict reasons
+        +list skipped_tasks
+        +date schedule_date
+        +generate(owner) list
+        +explain_task(task) str
+        +get_summary() str
+        +add_task(task)
+    }
+
+    Owner "1" --> "0..*" Pet : owns
+    Pet "1" --> "0..*" CareTask : has
+    Owner "1" --> "0..*" DailySchedule : generates
+    DailySchedule "1" --> "1" Pet : schedules for
+    DailySchedule "1" --> "0..*" CareTask : includes

@@ -9,13 +9,15 @@ The three most important things a user is able tio perform in this app are:
 
 **a. Initial design**
 
-- Briefly describe your initial UML design.
-- What classes did you include, and what responsibilities did you assign to each?
+the classes chosen for this code are the following:
+- Owner: Stores basic information about the pet’s owner, including how much time they have and any care preferences. Those details help shape the daily plan.
+-Pet: Stores the pet’s basic information and keeps track of the care tasks needed for that pet.
+-CareTask: Describes one activity, such as feeding or walking, including how long it takes and how important it is.
+-DailySchedule: Uses the owner’s available time and the pet’s care tasks to create an ordered plan for the day. It can also summarize the plan and explain why tasks were included.
 
 **b. Design changes**
 
-- Did your design change during implementation?
-- If yes, describe at least one change and why you made it.
+None made
 
 ---
 
