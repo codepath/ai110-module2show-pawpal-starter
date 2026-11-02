@@ -7,6 +7,8 @@
 - Briefly describe your initial UML design.
 - What classes did you include, and what responsibilities did you assign to each?
 
+**Answer: Based on the intial UML Design, **
+
 **b. Design changes**
 
 - Did your design change during implementation?
