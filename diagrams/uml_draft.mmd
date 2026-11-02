@@ -1,0 +1,41 @@
+classDiagram
+    %% Task, Pet, and Scheduler come from pawpal_system.py.
+    %% Owner is proposed: app.py asks for an owner name, but no Owner class exists yet.
+
+    class Owner {
+        +str name
+        +List~Pet~ pets
+        +add_pet(pet: Pet) None
+    }
+
+    class Pet {
+        +str name
+        +str species
+        +int age
+        +List~Task~ tasks
+        +add_task(task: Task) None
+    }
+
+    class Task {
+        +str description
+        +datetime due_time
+        +int duration_mins
+        +str frequency = "Once"
+        +bool is_completed = False
+        +mark_complete() None
+    }
+
+    class Scheduler {
+        +List~Pet~ pets
+        +__init__()
+        +add_pet(pet: Pet) None
+        +get_all_tasks() List~tuple~
+        +get_upcoming_tasks() List~tuple~
+        +check_conflicts(new_task: Task) bool
+        +generate_recurring_tasks() None
+    }
+
+    Owner "1" o-- "0..*" Pet : owns
+    Pet "1" *-- "0..*" Task : has
+    Scheduler "1" o-- "0..*" Pet : manages
+    Scheduler ..> Task : schedules / checks conflicts
