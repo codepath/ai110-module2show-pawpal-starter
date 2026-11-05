@@ -1,5 +1,17 @@
 # AI Interactions Log
 
+## AI110 final-project interaction (November 5, 2026 UTC)
+
+The final-project request asked the agent to preserve PawPal+ scheduling, complete the AI110 requirements and four bonus features, and test real results without claiming a guaranteed grade. The agent inspected the branch and staged AI files, consulted AVMA/ASPCA guidance, added attributed retrieval, grounded JSON responses, a review-only care planner, a deterministic evaluation subset, and documentation. The first planner syntax check found an unclosed schema dictionary; it was fixed before evaluation.
+
+**Real baseline/RAG comparison:** The same question, “How should I plan dog exercise and fresh water on a warm day?”, was sent once directly to `gemini-3.1-flash-lite` and once through PawPal+'s retrieval path. The direct response gave timing and pavement advice without local citations and was truncated by the 200-token cap. The grounded response advised cooler walks, breaks, shade, water, and veterinary consultation before a new exercise program, citing `dog_care:0` and `dog_care:1`. The complete observed outputs and source URLs are in [the comparison record](docs/ai_live_comparison.json). This single example shows the difference in grounding and citations; it does not establish overall accuracy.
+
+**Real planning trace:** With one demo dog named Mochi, no existing tasks, and a 30-minute budget, the live request asked for a short exercise and water routine. The recorded trace shows: interpret accepted → retrieve 4 chunks → inspect 1 pet and 0 tasks → receive 3 model candidates with valid source IDs → validate task fields and source terms → Scheduler selected 3 of 3 within the budget → present for review. The suggested walk (20 minutes), water/shade check (5), and hydration break (5) were never added to the owner's tasks. See the full trace in the same JSON record. This is an observable action log, not the model's private reasoning.
+
+**Evaluation separation:** `python -m ai.evaluate` passed 23 mocked cases for successful answers, failure paths, citations, safety, UI wiring, and planning validation. Live results above were separate provider calls. The first full pytest attempt hit an existing Windows temporary-directory permission issue during 21 fixture setups; a fresh temporary-directory run is reported in the AI110 section of the README.
+
+---
+
 This log records the agent workflow and prompt-comparison work completed for PawPal+.
 
 ---

@@ -8,3 +8,4 @@ venv/
 .pytest_cache/
 .DS_Store
 /data/
+.pytest_temp/

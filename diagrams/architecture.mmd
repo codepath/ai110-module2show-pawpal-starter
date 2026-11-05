@@ -1,0 +1,28 @@
+flowchart LR
+    user[Pet owner] --> ui[Streamlit app]
+    ui -->|ask or suggest tasks| handler[AI request handler]
+    handler -->|search query| retriever[Local retriever]
+    retriever -->|read attributed chunks| kb[(Local pet-care knowledge files)]
+    kb -->|matching chunks and source IDs| retriever
+    retriever -->|grounding context| handler
+    handler -->|bounded structured request| gemini[Gemini API]
+    gemini -->|answer or proposal with cited IDs| handler
+    handler -->|validated answer and sources| ui
+    handler -->|candidate tasks for validation| scheduler[Deterministic Scheduler]
+    scheduler -->|budget decision and action trace| handler
+    ui -->|user adds or edits tasks; generate plan| scheduler
+    scheduler -->|plan, conflicts, free slots| ui
+    ui -->|explicit save or load| storage[(Local JSON persistence)]
+    storage -->|owner, pets, tasks, settings| ui
+
+    subgraph AI_workflow[AI workflow: advisory only]
+        handler
+        retriever
+        kb
+        gemini
+    end
+
+    subgraph Scheduling_workflow[Scheduling workflow: deterministic]
+        scheduler
+        storage
+    end

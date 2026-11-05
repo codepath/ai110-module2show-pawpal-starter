@@ -102,3 +102,14 @@ Pending-task editing, JSON storage and next-available-slot search are now implem
 **c. Key takeaway**
 
 My main takeaway is that using AI does not remove my role as the lead architect. Codex can generate code quickly, but I am responsible for the requirements, class responsibilities, scope decisions, validation, and understanding the final product. A passing test suite is useful evidence, and I still need to know what it covers and what it leaves out. The best result comes from giving focused instructions, reviewing the changes and evidence, and choosing solutions I can explain.
+# AI110 final-project extension (November 2026)
+
+This section supplements the earlier Module 2 reflection below. Repository evidence shows that the AI110 work extended the existing four-class scheduler with local retrieval, Gemini answers, and a review-only planning workflow. The original scheduling and JSON Save/Load behavior stayed in place. The AI tools helped inspect the staged implementation, identify gaps, draft modular changes, and generate tests. The source notes were checked against AVMA and ASPCA pages before being added; source URLs and the live model outputs are recorded in the repository.
+
+The first planner syntax check caught an unclosed JSON-schema dictionary, which was corrected before evaluation. The first full pytest attempt ran into a Windows permission error while pytest tried to clear an existing `.pytest_temp` directory; those were fixture setup errors, not failed AI assertions. A later run with a fresh temporary directory is recorded in the final verification results. The deterministic AI evaluation used mocked model calls so safety and citation rules could be checked without network variability. A separate live comparison showed a direct Gemini answer with uncited, specific advice and a grounded answer citing two AVMA chunks; the direct answer was truncated at 200 tokens. The live planning trace recorded three suggestions passing the scheduler's 30-minute demo budget. These observations support only the tested examples.
+
+The biggest limitation is that a valid source ID does not prove every sentence is supported by its source. Keyword retrieval can also miss a relevant care question or retrieve a broad paragraph. The emergency and medical guards cover common patterns but cannot replace veterinary judgment. The scheduler checks the total daily budget for proposals; it does not create appointment times. I would review the UI in a real browser and ask a veterinarian to review any medical-facing wording before wider use.
+
+**TODO for the student before submission:** Add your own account of what you personally inspected, changed, or decided during this AI110 extension. Confirm whether you ran the app manually, reviewed the live outputs, and agree with the claims in this section. Do not present the agent's work as a personal verification you did not perform.
+
+---

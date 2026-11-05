@@ -1,4 +1,75 @@
-# PawPal+ (Module 2 Project)
+# PawPal+ — AI110 Applied AI System
+
+PawPal+ helps a pet owner keep track of care tasks across multiple pets. The original Streamlit application let owners add pets and tasks, edit and complete tasks, find free time, and generate a daily plan. The AI110 extension answers general care questions from attributed local references and suggests new tasks for the owner's existing pets. The deterministic `Scheduler` decides whether suggested tasks fit the owner's time budget. AI suggestions never add, complete, delete, or save a task.
+
+## AI110 features and scope
+
+| Original application | AI extension |
+| --- | --- |
+| Owner, pets, tasks, recurrence, filters, conflict warnings, priority and time-budget plans | Multi-source local retrieval, structured Gemini answers with validated citations, and review-only care-task proposals |
+| Explicit local JSON Save/Load | Observable planning trace and deterministic validation of proposed tasks using a copy of the owner |
+
+Target users are individual pet owners planning routine care. The AI assistant is for general education and scheduling ideas, not veterinary diagnosis or treatment. The app runs without an API key; all original scheduling and storage controls continue to work.
+
+### Technology and files
+
+Python 3.10+, Streamlit, `google-genai`, pytest, Mermaid, and standard-library JSON make up the stack. `app.py` provides the UI; `pawpal_system.py` owns deterministic scheduling; `persistence.py` saves local data. `ai/retriever.py` ranks local text chunks; `ai/gemini_client.py` handles grounded answers; `ai/planner.py` builds validated, review-only proposals; `ai/knowledge/` contains attributed notes. The [architecture diagram](diagrams/architecture.mmd) separates AI and scheduling paths. [Model card](model_card.md), [AI interaction evidence](ai_interactions.md), and [reflection](reflection.md) document behavior and limits.
+
+### Install and run
+
+From the directory containing `app.py`:
+
+```bash
+python -m venv .venv
+# PowerShell: .venv\Scripts\Activate.ps1
+# macOS/Linux: source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m streamlit run app.py
+```
+
+The AI features need a Gemini API key in the `GEMINI_API_KEY` environment variable. Set it in your shell before starting Streamlit. Do not put the key in a file tracked by Git.
+
+```powershell
+$env:GEMINI_API_KEY = "your-key-here"
+python -m streamlit run app.py
+```
+
+On macOS/Linux, use `export GEMINI_API_KEY="your-key-here"`. Without a key, the AI controls explain that configuration is missing; pet and schedule features still work. The model is `gemini-3.1-flash-lite`, with a 12-second SDK request timeout and one model call per submitted question or proposal. Provider availability and latency can vary.
+
+### Try the app
+
+1. Add a dog named Mochi and optionally create a few care tasks. Set **Available minutes** and generate a schedule.
+2. Ask: “How should I plan dog exercise and fresh water on a warm day?” The answer should include local chunk IDs and links under **View cited knowledge sources** when Gemini returns a valid response.
+3. Request: “Suggest a short dog exercise and water routine for Mochi on a warm day.” Review the proposed tasks, their budget results, cited sources, and **Planning steps**. Add any useful tasks yourself with **Add task**.
+4. Try “quantum spaceship,” an empty question, or “My dog swallowed poison” to see knowledge and safety fallbacks.
+
+The AI path is: user → Streamlit → request handler → local retriever → knowledge chunks → Gemini → validated answer and sources. The planning path also copies current owner data, validates each proposed task, and asks the existing Scheduler whether it fits today's shared budget. The scheduler's own plan and explicit JSON Save/Load remain separate.
+
+### Guardrails and evaluation
+
+Empty and overlong requests, obvious prompt-injection attempts, possible emergencies, and requests for diagnosis or dosage stop before Gemini. A request with no matching knowledge or no key gets an explicit fallback. Gemini errors and timeouts return a generic message without exposing exception text. The model receives only retrieved notes and relevant owner-provided planning context. JSON output must have cited IDs that match retrieved chunks; invalid citations, unsafe dosage text, and invalid proposed tasks are rejected. The source-term check and citation validation reduce risk but cannot prove that every generated sentence is medically or factually correct. Seek a veterinarian for health concerns.
+
+Run the full suite and the separate deterministic AI evaluation harness:
+
+```bash
+python -m pytest -p no:cacheprovider
+python -m ai.evaluate
+```
+
+The AI evaluation currently has **23 passing deterministic cases** using mocked model output. They cover relevant answers, empty and irrelevant input, absent key, injection, veterinary boundaries, API failures, citations, species retrieval, proposal validation, budget rejection, UI wiring, and no mutation. The earlier 150-case scheduler/UI suite and five initial retrieval tests are preserved. The full project suite passed **178 tests** on November 5, 2026 UTC using a fresh temporary directory. The [live comparison record](docs/ai_live_comparison.json) contains real calls: a direct model answer without local citations, a grounded answer citing `dog_care:0` and `dog_care:1`, and a planning run whose three proposals fit a 30-minute demo budget. The direct answer was capped at 200 output tokens and ended mid-sentence; this single example does not establish general model superiority. A fresh live run is optional: `python -m ai.compare` requires a key and writes a new comparison record only after the baseline and grounded calls succeed. On this Windows workspace, the older `.pytest_temp` directory was inaccessible to pytest cleanup; use the default temp location or a fresh `--basetemp` path if you see that setup error.
+
+[Exact verification commands and outcomes](docs/ai_verification.md) distinguish mocked evaluation, full tests, app startup, Mermaid parsing, and live-model calls.
+
+### Bonus features and limits
+
+1. **Custom multi-source RAG:** local AVMA and ASPCA notes carry titles, URLs, and stable chunk IDs; ranking ignores common words and filters explicit dog/cat queries. The comparison record shows the observed baseline/RAG difference.
+2. **Multi-step workflow:** request interpretation, retrieval, owner context inspection, Gemini proposal, task validation, Scheduler budget check, and a user-review trace. The live trace is in `docs/ai_live_comparison.json`.
+3. **Model specialization:** fixed PawPal behavior, constrained JSON fields, citation checks, and care-plan limits are described in `model_card.md`.
+4. **Automated evaluation:** `python -m ai.evaluate` runs 23 deterministic scenarios in `tests/test_ai_evaluation.py`; live-model observations are reported separately.
+
+The knowledge base is intentionally small and can miss relevant questions. Keyword matching is weaker than semantic retrieval. The plan checks a shared minute budget; it does not reserve appointment times, check every interval conflict, or persist AI proposals. Local JSON storage is designed for one owner on a local machine. The UI should receive a manual browser and accessibility review before submission. For source details, see the notes in `ai/knowledge/` and the [AVMA warm-weather guide](https://avma.org/resources/pet-owners/petcare/warm-weather-pet-safety), [AVMA ownership guide](https://ebusiness.avma.org/files/productdownloads/Responsible-Pet-Ownership-EnglishColor.pdf), [ASPCA cat nutrition guide](https://www.aspca.org/pet-care/cat-care/cat-nutrition-tips), [ASPCA enrichment article](https://www.aspca.org/news/home-tips-keeping-your-pets-busy-and-engaged), and [ASPCA poisoning guidance](https://www.aspca.org/news/what-do-if-your-pet-poisoned).
+
+## Historical Module 2 project documentation
 
 **PawPal+** is a Streamlit app that helps an owner plan care tasks across multiple pets.
 

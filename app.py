@@ -1,3 +1,5 @@
+from ai.gemini_client import ask_gemini
+from ai.planner import propose_care_plan
 from datetime import date
 
 import streamlit as st
@@ -452,3 +454,57 @@ if st.button("Save data", key="save_data", disabled=not owner_name.strip() or no
     else:
         st.success("Saved pets, tasks, and settings to data/pawpal.json.")
 st.button("Load saved data", key="load_data", on_click=load_saved_data)
+st.divider()
+st.subheader("🐾 PawPal AI care guide")
+st.caption(
+    "Ask about general care or request a task proposal for your pets. "
+    "AI uses a small local knowledge base; it does not diagnose or change your tasks. "
+    "Your request and relevant pet/task names are sent to Gemini only when you submit."
+)
+
+
+def show_ai_sources(sources):
+    if sources:
+        with st.expander("View cited knowledge sources"):
+            for source in sources:
+                st.markdown(f"**{source['title']} — {source['chunk_id']}**")
+                if source["url"]:
+                    st.markdown(f"[Read original source]({source['url']})")
+                st.write(source["text"])
+
+
+with st.form("pawpal_ai_form"):
+    ai_question = st.text_area(
+        "What would you like to know?",
+        placeholder="How can I plan walks and fresh water for my dog?",
+        key="ai_question",
+    )
+    ask_ai = st.form_submit_button("Ask PawPal AI", key="ask_ai")
+
+if ask_ai:
+    with st.spinner("Checking care knowledge..."):
+        result = ask_gemini(ai_question)
+    st.markdown("### AI answer")
+    st.write(result["answer"])
+    show_ai_sources(result["sources"])
+
+st.markdown("### Suggest care tasks")
+st.caption("Proposals are checked against today's shared time budget. Review them and use Add task yourself if useful; nothing is saved automatically.")
+with st.form("pawpal_plan_form"):
+    planning_request = st.text_area(
+        "Care planning request",
+        placeholder="Suggest a short walk and water check for my dog within today's plan.",
+        key="planning_request",
+    )
+    request_plan = st.form_submit_button("Suggest tasks", key="suggest_tasks")
+
+if request_plan:
+    with st.spinner("Checking knowledge and schedule..."):
+        proposal = propose_care_plan(planning_request, owner, scheduler)
+    st.write(proposal["message"])
+    if proposal["tasks"]:
+        st.table(proposal["tasks"])
+    show_ai_sources(proposal["sources"])
+    with st.expander("Planning steps", expanded=True):
+        for number, step in enumerate(proposal["trace"], start=1):
+            st.write(f"{number}. {step['step']}: {step['detail']}")
